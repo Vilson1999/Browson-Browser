@@ -90,29 +90,29 @@ fun MenuBottomSheet(
 
     var isDesktopSite by remember { mutableStateOf(false) }
 
-    // Colors matching active theme
+    // Colors matching active theme (80% of white for light mode, never pure white)
     val containerColor = when {
         appTheme.isAmoled -> Color(0xFF000000)
         appTheme.isDark -> Color(0xFF0F172A)
-        else -> Color(0xFFFFFFFF)
+        else -> com.example.ui.theme.EightyPercentWhite
     }
 
     val toolPillBg = when {
         appTheme.isAmoled -> Color(0xFF121214)
         appTheme.isDark -> Color(0xFF1E293B)
-        else -> Color(0xFFF1F5F9)
+        else -> Color(0xFFD6D9E0)
     }
 
     val toolPillBorder = when {
         appTheme.isAmoled -> Color(0xFF27272A)
         appTheme.isDark -> Color(0xFF334155)
-        else -> Color(0xFFE2E8F0)
+        else -> Color(0xFFB8BCC6)
     }
 
     val bottomActionBg = when {
         appTheme.isAmoled -> Color(0xFF18181B)
         appTheme.isDark -> Color(0xFF243044)
-        else -> Color(0xFFE2E8F0)
+        else -> Color(0xFFD0D4DB)
     }
 
     // Map activeToolIds to ToolMenuItems, chunked in 3 columns

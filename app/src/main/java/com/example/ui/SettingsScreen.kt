@@ -8,11 +8,19 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.graphics.Brush
+import com.example.ui.theme.UiGradientPresets
+import com.example.ui.theme.NormalColorPresets
+import com.example.ui.theme.DualColorPresets
+import com.example.ui.theme.WallpaperStylePresets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -97,14 +106,40 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Accessibility
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.FilterChipDefaults
+
 enum class SettingsMenuPage(val titleResId: Int) {
     HOME_SCREEN(R.string.settings_home_screen),
     APPEARANCE(R.string.settings_appearance),
+    SEARCH_ENGINE(R.string.settings_search_engine),
     TOOL_MENU(R.string.settings_tool_menu),
     TOOLBAR(R.string.settings_toolbar),
     DOWNLOAD_MANAGER(R.string.settings_download_manager),
     SECURITY(R.string.settings_security),
-    ADS_BLOCKER(R.string.settings_ads_blocker)
+    PRIVACY_DATA(R.string.settings_privacy_data),
+    ADS_BLOCKER(R.string.settings_ads_blocker),
+    SITE_PERMISSIONS(R.string.settings_site_permissions),
+    ACCESSIBILITY(R.string.settings_accessibility),
+    DEVELOPER_ABOUT(R.string.settings_about)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,6 +148,12 @@ fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
     onBack: () -> Unit,
+    reduceAnimations: Boolean = false,
+    onToggleReduceAnimations: (Boolean) -> Unit = {},
+    animationScale: Float = 0.75f,
+    onAnimationScaleChange: (Float) -> Unit = {},
+    defaultSearchEngine: String = "Google",
+    onDefaultSearchEngineChange: (String) -> Unit = {},
     activeToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_IDS,
     availableToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_AVAILABLE_IDS,
     onRemoveTool: (String) -> Unit = {},
@@ -126,7 +167,18 @@ fun SettingsScreen(
     onAddToolbarTool: (String) -> Boolean = { false },
     onMoveToolbarTool: (Int, Int) -> Unit = { _, _ -> },
     onResetToolbar: () -> Unit = {},
-    onOpenBookmarks: () -> Unit = {}
+    onOpenBookmarks: () -> Unit = {},
+    uiGradientId: String? = null,
+    onSelectUiGradient: (String?) -> Unit = {},
+    wallpaperMode: String = "SYSTEM",
+    wallpaperStyle: String = "mesh_prism",
+    onSelectWallpaper: (String, String) -> Unit = { _, _ -> },
+    customPrimaryHex: Long? = null,
+    customIconBgHex: Long? = null,
+    isDualColorActive: Boolean = false,
+    onSelectNormalColor: (Long) -> Unit = {},
+    onSelectDualColor: (Long, Long) -> Unit = { _, _ -> },
+    onResetColor: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val appTheme = LocalAppTheme.current
@@ -228,33 +280,85 @@ fun SettingsScreen(
                     .testTag("settings_screen"),
                 containerColor = bgColor,
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text = stringResource(R.string.settings_title),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp,
-                                color = primaryTextColor
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = onBack,
-                                modifier = Modifier.testTag("settings_back_button")
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = appTheme.topBarBg,
+                        tonalElevation = 2.dp
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.nav_back),
-                                    tint = primaryTextColor
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = onBack,
+                                            modifier = Modifier.testTag("settings_back_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = stringResource(R.string.nav_back),
+                                                tint = primaryTextColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Text(
+                                        text = stringResource(R.string.settings_title),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = primaryTextColor
+                                    )
+                                }
+
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            val next = when (themeMode) {
+                                                ThemeMode.LIGHT -> ThemeMode.DARK
+                                                ThemeMode.DARK -> ThemeMode.AMOLED
+                                                ThemeMode.AMOLED -> ThemeMode.LIGHT
+                                                ThemeMode.SYSTEM -> if (isDark) ThemeMode.LIGHT else ThemeMode.DARK
+                                            }
+                                            onThemeModeChange(next)
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = when (themeMode) {
+                                                ThemeMode.LIGHT -> Icons.Filled.LightMode
+                                                ThemeMode.DARK -> Icons.Filled.DarkMode
+                                                ThemeMode.AMOLED -> Icons.Filled.Brightness4
+                                                ThemeMode.SYSTEM -> Icons.Filled.BrightnessAuto
+                                            },
+                                            contentDescription = "Switch Theme",
+                                            tint = accentTint,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
                             }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = bgColor,
-                            navigationIconContentColor = primaryTextColor,
-                            titleContentColor = primaryTextColor
-                        )
-                    )
+                        }
+                    }
                 }
             ) { innerPadding ->
                 LazyColumn(
@@ -531,6 +635,86 @@ fun SettingsScreen(
                         )
                     }
 
+                    // 8. Search Engine & Address Bar Card
+                    item {
+                        SettingsMenuItemCard(
+                            title = stringResource(R.string.settings_search_engine),
+                            subtitle = stringResource(R.string.settings_search_engine_desc),
+                            icon = Icons.Filled.Search,
+                            onClick = { currentSubPage = SettingsMenuPage.SEARCH_ENGINE },
+                            testTag = "settings_menu_search_engine",
+                            badgeBgColor = badgeBgColor,
+                            accentTint = accentTint,
+                            cardBgColor = cardBgColor,
+                            primaryTextColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+                    }
+
+                    // 9. Privacy & Browsing Data Card
+                    item {
+                        SettingsMenuItemCard(
+                            title = stringResource(R.string.settings_privacy_data),
+                            subtitle = stringResource(R.string.settings_privacy_data_desc),
+                            icon = Icons.Filled.Lock,
+                            onClick = { currentSubPage = SettingsMenuPage.PRIVACY_DATA },
+                            testTag = "settings_menu_privacy_data",
+                            badgeBgColor = badgeBgColor,
+                            accentTint = accentTint,
+                            cardBgColor = cardBgColor,
+                            primaryTextColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+                    }
+
+                    // 10. Site Permissions Card
+                    item {
+                        SettingsMenuItemCard(
+                            title = stringResource(R.string.settings_site_permissions),
+                            subtitle = stringResource(R.string.settings_site_permissions_desc),
+                            icon = Icons.Filled.Tune,
+                            onClick = { currentSubPage = SettingsMenuPage.SITE_PERMISSIONS },
+                            testTag = "settings_menu_site_permissions",
+                            badgeBgColor = badgeBgColor,
+                            accentTint = accentTint,
+                            cardBgColor = cardBgColor,
+                            primaryTextColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+                    }
+
+                    // 11. Accessibility & Font Card
+                    item {
+                        SettingsMenuItemCard(
+                            title = stringResource(R.string.settings_accessibility),
+                            subtitle = stringResource(R.string.settings_accessibility_desc),
+                            icon = Icons.Filled.Accessibility,
+                            onClick = { currentSubPage = SettingsMenuPage.ACCESSIBILITY },
+                            testTag = "settings_menu_accessibility",
+                            badgeBgColor = badgeBgColor,
+                            accentTint = accentTint,
+                            cardBgColor = cardBgColor,
+                            primaryTextColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+                    }
+
+                    // 12. About Browson Card
+                    item {
+                        SettingsMenuItemCard(
+                            title = stringResource(R.string.settings_about),
+                            subtitle = stringResource(R.string.settings_about_desc),
+                            icon = Icons.Filled.Info,
+                            onClick = { currentSubPage = SettingsMenuPage.DEVELOPER_ABOUT },
+                            testTag = "settings_menu_about",
+                            badgeBgColor = badgeBgColor,
+                            accentTint = accentTint,
+                            cardBgColor = cardBgColor,
+                            primaryTextColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+                    }
+
                     item {
                         Spacer(modifier = Modifier.height(24.dp))
                     }
@@ -546,33 +730,55 @@ fun SettingsScreen(
                     .testTag("settings_subpage_${targetPage.name.lowercase()}"),
                 containerColor = bgColor,
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text = stringResource(targetPage.titleResId),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 19.sp,
-                                color = primaryTextColor
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = { currentSubPage = null },
-                                modifier = Modifier.testTag("settings_subpage_back_button")
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = appTheme.topBarBg,
+                        tonalElevation = 2.dp
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back to Settings",
-                                    tint = primaryTextColor
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = { currentSubPage = null },
+                                            modifier = Modifier.testTag("settings_subpage_back_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = "Back to Settings",
+                                                tint = primaryTextColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Text(
+                                        text = stringResource(targetPage.titleResId),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = primaryTextColor
+                                    )
+                                }
                             }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = bgColor,
-                            navigationIconContentColor = primaryTextColor,
-                            titleContentColor = primaryTextColor
-                        )
-                    )
+                        }
+                    }
                 }
             ) { innerPadding ->
                 LazyColumn(
@@ -717,16 +923,16 @@ fun SettingsScreen(
                         }
 
                         SettingsMenuPage.APPEARANCE -> {
-                            // Option 1: Theme Wallpaper
+                            // Section 1: Theme Mode (Light, Dark, AMOLED, Auto)
                             item {
                                 SettingsOptionGroupCard(
-                                    title = "Theme Wallpaper",
+                                    title = "Theme Mode",
                                     cardBgColor = cardBgColor,
                                     primaryTextColor = primaryTextColor,
                                     cardBorderColor = cardBorderColor
                                 ) {
                                     Text(
-                                        text = "Select the base color theme for the browser interface:",
+                                        text = "Select dark, light, or pure black AMOLED mode:",
                                         fontSize = 12.sp,
                                         color = secondaryTextColor
                                     )
@@ -767,6 +973,429 @@ fun SettingsScreen(
                                                 Icon(Icons.Filled.BrightnessAuto, contentDescription = null, modifier = Modifier.size(14.dp))
                                             }
                                         )
+                                    }
+                                }
+                            }
+
+                            // Section 2: UI Background (10 Gradient Colours)
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = stringResource(R.string.settings_ui_background),
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    Text(
+                                        text = "Select any gradient color to set as the whole UI background colour:",
+                                        fontSize = 12.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        // Option: Default Theme (no gradient overlay)
+                                        val isDefaultSelected = uiGradientId == null
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier
+                                                .width(72.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .clickable { onSelectUiGradient(null) }
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(56.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(cardBgColor)
+                                                    .border(
+                                                        width = if (isDefaultSelected) 2.5.dp else 1.dp,
+                                                        color = if (isDefaultSelected) accentTint else cardBorderColor,
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (isDefaultSelected) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Check,
+                                                        contentDescription = "Selected",
+                                                        tint = accentTint,
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "Default",
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = secondaryTextColor
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "Theme",
+                                                fontSize = 10.sp,
+                                                color = primaryTextColor,
+                                                maxLines = 1,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+
+                                        // 10 Gradient Presets
+                                        UiGradientPresets.forEach { preset ->
+                                            val isSelected = uiGradientId == preset.id
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier
+                                                    .width(72.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .clickable { onSelectUiGradient(preset.id) }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(56.dp)
+                                                        .clip(RoundedCornerShape(12.dp))
+                                                        .background(Brush.linearGradient(preset.colors))
+                                                        .border(
+                                                            width = if (isSelected) 2.5.dp else 1.dp,
+                                                            color = if (isSelected) Color.White else Color.Transparent,
+                                                            shape = RoundedCornerShape(12.dp)
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    if (isSelected) {
+                                                        Surface(
+                                                            shape = CircleShape,
+                                                            color = Color.Black.copy(alpha = 0.55f),
+                                                            modifier = Modifier.size(26.dp)
+                                                        ) {
+                                                            Box(contentAlignment = Alignment.Center) {
+                                                                Icon(
+                                                                    imageVector = Icons.Filled.Check,
+                                                                    contentDescription = "Selected",
+                                                                    tint = Color.White,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = preset.name,
+                                                    fontSize = 10.sp,
+                                                    color = primaryTextColor,
+                                                    maxLines = 1,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Section 3: Wallpaper Menu (Light, Dark, System Default)
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = stringResource(R.string.settings_home_wallpaper),
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    Text(
+                                        text = "Select wallpaper for Home Screen background:",
+                                        fontSize = 12.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // 3 Options: System Default (Auto), Light, Dark
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf(
+                                            Triple("SYSTEM", "System Default", Icons.Filled.BrightnessAuto),
+                                            Triple("LIGHT", "Light", Icons.Filled.LightMode),
+                                            Triple("DARK", "Dark", Icons.Filled.DarkMode)
+                                        ).forEach { (mode, label, icon) ->
+                                            FilterChip(
+                                                selected = wallpaperMode.uppercase() == mode,
+                                                onClick = { onSelectWallpaper(mode, wallpaperStyle) },
+                                                label = { Text(label, fontSize = 11.sp) },
+                                                leadingIcon = {
+                                                    Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = accentTint.copy(alpha = 0.2f),
+                                                    selectedLabelColor = accentTint
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "Wallpaper Style:",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = primaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        WallpaperStylePresets.forEach { stylePreset ->
+                                            val isSelected = wallpaperStyle == stylePreset.id
+                                            val previewColors = if (wallpaperMode == "DARK" || (wallpaperMode == "SYSTEM" && isDark)) {
+                                                stylePreset.darkColors
+                                            } else {
+                                                stylePreset.lightColors
+                                            }
+                                            Column(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clip(RoundedCornerShape(10.dp))
+                                                    .clickable { onSelectWallpaper(wallpaperMode, stylePreset.id) },
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(48.dp)
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                        .background(Brush.verticalGradient(previewColors))
+                                                        .border(
+                                                            width = if (isSelected) 2.dp else 1.dp,
+                                                            color = if (isSelected) accentTint else cardBorderColor,
+                                                            shape = RoundedCornerShape(10.dp)
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    if (isSelected) {
+                                                        Surface(
+                                                            shape = CircleShape,
+                                                            color = accentTint,
+                                                            modifier = Modifier.size(20.dp)
+                                                        ) {
+                                                            Box(contentAlignment = Alignment.Center) {
+                                                                Icon(
+                                                                    imageVector = Icons.Filled.Check,
+                                                                    contentDescription = "Selected",
+                                                                    tint = Color.White,
+                                                                    modifier = Modifier.size(12.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = stylePreset.name,
+                                                    fontSize = 10.sp,
+                                                    color = primaryTextColor,
+                                                    maxLines = 1,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Section 4: Colour Menu (10 Normal Colours + 10 Two-Colour Options)
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = stringResource(R.string.settings_app_colour),
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    // Subsection A: 10 Normal Colours
+                                    Text(
+                                        text = "10 Normal Colours (Sets app UI colour):",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = primaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        NormalColorPresets.forEach { preset ->
+                                            val isSelected = !isDualColorActive && customPrimaryHex == preset.colorHex
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable { onSelectNormalColor(preset.colorHex) }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(44.dp)
+                                                        .clip(CircleShape)
+                                                        .background(preset.color)
+                                                        .border(
+                                                            width = if (isSelected) 3.dp else 1.dp,
+                                                            color = if (isSelected) primaryTextColor else Color.Transparent,
+                                                            shape = CircleShape
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    if (isSelected) {
+                                                        Icon(
+                                                            imageVector = Icons.Filled.Check,
+                                                            contentDescription = "Selected",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = preset.name.split(" ").first(),
+                                                    fontSize = 10.sp,
+                                                    color = primaryTextColor,
+                                                    maxLines = 1,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(vertical = 12.dp))
+
+                                    // Subsection B: 10 Two-Colour Options
+                                    Text(
+                                        text = "10 Two-Colour Options (Dark & light in same icon):",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = primaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Dark colour is used as main UI colour and light colour as icon background",
+                                        fontSize = 11.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        DualColorPresets.forEach { preset ->
+                                            val isSelected = isDualColorActive &&
+                                                customPrimaryHex == preset.darkHex &&
+                                                customIconBgHex == preset.lightHex
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable { onSelectDualColor(preset.darkHex, preset.lightHex) }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(46.dp)
+                                                        .clip(CircleShape)
+                                                        .border(
+                                                            width = if (isSelected) 3.dp else 1.5.dp,
+                                                            color = if (isSelected) primaryTextColor else cardBorderColor,
+                                                            shape = CircleShape
+                                                        )
+                                                ) {
+                                                    Canvas(modifier = Modifier.fillMaxSize()) {
+                                                        // Left half: dark colour
+                                                        drawArc(
+                                                            color = preset.darkColor,
+                                                            startAngle = 90f,
+                                                            sweepAngle = 180f,
+                                                            useCenter = true
+                                                        )
+                                                        // Right half: light colour
+                                                        drawArc(
+                                                            color = preset.lightColor,
+                                                            startAngle = 270f,
+                                                            sweepAngle = 180f,
+                                                            useCenter = true
+                                                        )
+                                                    }
+                                                    if (isSelected) {
+                                                        Surface(
+                                                            shape = CircleShape,
+                                                            color = Color.Black.copy(alpha = 0.55f),
+                                                            modifier = Modifier
+                                                                .size(24.dp)
+                                                                .align(Alignment.Center)
+                                                        ) {
+                                                            Box(contentAlignment = Alignment.Center) {
+                                                                Icon(
+                                                                    imageVector = Icons.Filled.Check,
+                                                                    contentDescription = "Selected",
+                                                                    tint = Color.White,
+                                                                    modifier = Modifier.size(15.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = preset.name.split(" ").first(),
+                                                    fontSize = 10.sp,
+                                                    color = primaryTextColor,
+                                                    maxLines = 1,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (customPrimaryHex != null || isDualColorActive) {
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable { onResetColor() }
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.RestartAlt,
+                                                        contentDescription = "Reset",
+                                                        tint = accentTint,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    Text(
+                                                        text = "Reset Color",
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = accentTint
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -823,6 +1452,67 @@ fun SettingsScreen(
                                     primaryTextColor = primaryTextColor,
                                     cardBorderColor = cardBorderColor
                                 ) {
+                                    SettingToggleRow(
+                                        title = stringResource(R.string.settings_reduce_animations),
+                                        description = stringResource(R.string.settings_reduce_animations_desc),
+                                        checked = reduceAnimations,
+                                        onCheckedChange = { isReduced ->
+                                            onToggleReduceAnimations(isReduced)
+                                            if (isReduced) {
+                                                onAnimationScaleChange(0.375f)
+                                            } else {
+                                                onAnimationScaleChange(0.75f)
+                                            }
+                                        },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(vertical = 10.dp))
+
+                                    Text(
+                                        text = "Animation Speed Scale:",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = primaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Controls transition duration across screens and menus",
+                                        fontSize = 11.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf(
+                                            Pair("0.75x (Default)", 0.75f),
+                                            Pair("0.5x (-50%)", 0.5f),
+                                            Pair("0.25x", 0.25f),
+                                            Pair("Off (0x)", 0.0f)
+                                        ).forEach { (label, scale) ->
+                                            val isSelected = kotlin.math.abs(animationScale - scale) < 0.05f
+                                            FilterChip(
+                                                selected = isSelected,
+                                                onClick = {
+                                                    onAnimationScaleChange(scale)
+                                                    onToggleReduceAnimations(scale < 0.75f)
+                                                },
+                                                label = { Text(label, fontSize = 11.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = accentTint.copy(alpha = 0.2f),
+                                                    selectedLabelColor = accentTint
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(vertical = 10.dp))
+
                                     SettingToggleRow(
                                         title = "Smooth Page Transitions",
                                         description = "Enable animated screen transitions and modal reveals",
@@ -1714,6 +2404,443 @@ fun SettingsScreen(
                                         primaryTextColor = primaryTextColor,
                                         secondaryTextColor = secondaryTextColor
                                     )
+                                }
+                            }
+                        }
+
+                        SettingsMenuPage.SEARCH_ENGINE -> {
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Default Search Engine",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    Text(
+                                        text = "Choose search provider used for queries entered in address bar:",
+                                        fontSize = 12.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        listOf(
+                                            Pair("Google", "https://www.google.com/search?q="),
+                                            Pair("DuckDuckGo", "https://duckduckgo.com/?q="),
+                                            Pair("Bing", "https://www.bing.com/search?q="),
+                                            Pair("Brave Search", "https://search.brave.com/search?q="),
+                                            Pair("Yahoo", "https://search.yahoo.com/search?p="),
+                                            Pair("Ecosia", "https://www.ecosia.org/search?q=")
+                                        ).forEach { (engineName, _) ->
+                                            val isSelected = defaultSearchEngine.equals(engineName, ignoreCase = true)
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = if (isSelected) accentTint.copy(alpha = 0.12f) else Color.Transparent,
+                                                border = androidx.compose.foundation.BorderStroke(
+                                                    width = 1.dp,
+                                                    color = if (isSelected) accentTint else cardBorderColor
+                                                ),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .clickable {
+                                                        onDefaultSearchEngineChange(engineName)
+                                                        Toast.makeText(context, "Search engine set to $engineName", Toast.LENGTH_SHORT).show()
+                                                    }
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        text = engineName,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                        color = primaryTextColor
+                                                    )
+                                                    if (isSelected) {
+                                                        Icon(
+                                                            imageVector = Icons.Filled.CheckCircle,
+                                                            contentDescription = "Selected",
+                                                            tint = accentTint,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Address Bar & Suggestions",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    SettingToggleRow(
+                                        title = "Search Suggestions While Typing",
+                                        description = "Provides live keyword suggestions as you type in address bar",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Show Bookmarks in Suggestions",
+                                        description = "Quickly jump to saved bookmarks from the search bar",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Voice Search Shortcut",
+                                        description = "Display microphone icon inside the address bar for speech-to-text",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+                                }
+                            }
+                        }
+
+                        SettingsMenuPage.PRIVACY_DATA -> {
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Browsing Data & History",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    Text(
+                                        text = "Clean saved data, cached web pages, cookies and history:",
+                                        fontSize = 12.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Button(
+                                        onClick = {
+                                            Toast.makeText(context, "Browsing cache, cookies, and temporary data cleared!", Toast.LENGTH_LONG).show()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = accentTint,
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                                    ) {
+                                        Icon(Icons.Filled.DeleteSweep, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Clear Browsing Data Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Clear Data on Exit",
+                                        description = "Automatically delete history and cached images when closing browser",
+                                        checked = clearDataOnExit,
+                                        onCheckedChange = { clearDataOnExit = it },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Block WebRTC IP Leaks",
+                                        description = "Prevents local and public IP address exposure via WebRTC audio/video",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+                                }
+                            }
+                        }
+
+                        SettingsMenuPage.SITE_PERMISSIONS -> {
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Hardware & Sensor Permissions",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    SettingToggleRow(
+                                        title = "Camera Access",
+                                        description = "Allow websites to ask for camera access for video calls and QR scanning",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Microphone Access",
+                                        description = "Allow websites to request audio input for voice notes and calls",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Device Location Access",
+                                        description = "Ask before sharing GPS location with mapping and weather services",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+                                }
+                            }
+
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Content & Web Features",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    SettingToggleRow(
+                                        title = "JavaScript Enabled",
+                                        description = "Recommended for interactive websites, dynamic forms and apps",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Block Third-Party Cookies",
+                                        description = "Restricts cross-site tracking cookies across different web domains",
+                                        checked = blockThirdPartyCookies,
+                                        onCheckedChange = { blockThirdPartyCookies = it },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Request Desktop Site by Default",
+                                        description = "Loads full desktop layouts instead of mobile-adapted versions",
+                                        checked = false,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+                                }
+                            }
+                        }
+
+                        SettingsMenuPage.ACCESSIBILITY -> {
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Text Scaling & Sizing",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    Text(
+                                        text = "Adjust text size scaling across all web pages and articles:",
+                                        fontSize = 12.sp,
+                                        color = secondaryTextColor
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf("75%", "100%", "125%", "150%").forEach { scaleLabel ->
+                                            FilterChip(
+                                                selected = scaleLabel == "100%",
+                                                onClick = {
+                                                    Toast.makeText(context, "Text scaling set to $scaleLabel", Toast.LENGTH_SHORT).show()
+                                                },
+                                                label = { Text(scaleLabel, fontSize = 11.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = accentTint.copy(alpha = 0.2f),
+                                                    selectedLabelColor = accentTint
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Force Enable Page Zoom",
+                                        description = "Overrides websites that attempt to disable pinch-to-zoom gestures",
+                                        checked = true,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+
+                                    HorizontalDivider(color = cardBorderColor)
+
+                                    SettingToggleRow(
+                                        title = "Automatic Reader View",
+                                        description = "Offers clean distraction-free reading mode on supported articles",
+                                        checked = false,
+                                        onCheckedChange = { },
+                                        accentTint = accentTint,
+                                        primaryTextColor = primaryTextColor,
+                                        secondaryTextColor = secondaryTextColor
+                                    )
+                                }
+                            }
+                        }
+
+                        SettingsMenuPage.DEVELOPER_ABOUT -> {
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, cardBorderColor)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = accentTint.copy(alpha = 0.15f),
+                                            modifier = Modifier.size(68.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Person,
+                                                    contentDescription = null,
+                                                    tint = accentTint,
+                                                    modifier = Modifier.size(36.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        Text(
+                                            text = "Vilson Sonkar",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 20.sp,
+                                            color = primaryTextColor
+                                        )
+
+                                        Text(
+                                            text = "Lead Android Developer & Creator",
+                                            fontSize = 13.sp,
+                                            color = accentTint,
+                                            fontWeight = FontWeight.Medium
+                                        )
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Text(
+                                            text = "Browson Native Web Browser v1.0.0",
+                                            fontSize = 12.sp,
+                                            color = secondaryTextColor
+                                        )
+
+                                        Spacer(modifier = Modifier.height(14.dp))
+
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = badgeBgColor,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Column(modifier = Modifier.padding(14.dp)) {
+                                                Text(
+                                                    text = "Built with modern Jetpack Compose, Material 3 design system, and custom dark/light/AMOLED theme engine. Browson provides speed dials, bookmarks, custom toolbar, and privacy tools.",
+                                                    fontSize = 12.sp,
+                                                    lineHeight = 18.sp,
+                                                    color = primaryTextColor
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            item {
+                                SettingsOptionGroupCard(
+                                    title = "Application Maintenance",
+                                    cardBgColor = cardBgColor,
+                                    primaryTextColor = primaryTextColor,
+                                    cardBorderColor = cardBorderColor
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            Toast.makeText(context, "Browson is running the latest version (1.0.0)!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = accentTint.copy(alpha = 0.15f),
+                                            contentColor = accentTint
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth().height(42.dp)
+                                    ) {
+                                        Text("Check for Updates", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Button(
+                                        onClick = {
+                                            onResetTools()
+                                            onResetToolbar()
+                                            onAnimationScaleChange(0.75f)
+                                            onToggleReduceAnimations(false)
+                                            Toast.makeText(context, "All settings restored to default values", Toast.LENGTH_SHORT).show()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFE53935).copy(alpha = 0.12f),
+                                            contentColor = Color(0xFFE53935)
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth().height(42.dp)
+                                    ) {
+                                        Text("Reset All Settings to Defaults", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
                                 }
                             }
                         }

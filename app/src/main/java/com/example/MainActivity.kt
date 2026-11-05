@@ -5,12 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.graphics.Color
+import com.example.ui.theme.LocalAppTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -49,12 +52,27 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.AMOLED -> true
             }
 
-            BrowsonTheme(themeMode = uiState.themeMode) {
+            BrowsonTheme(
+                themeMode = uiState.themeMode,
+                reduceAnimations = uiState.reduceAnimations,
+                animationScale = uiState.animationScale,
+                uiGradientId = uiState.uiGradientId,
+                wallpaperMode = uiState.wallpaperMode,
+                wallpaperStyle = uiState.wallpaperStyle,
+                customPrimaryHex = uiState.customPrimaryHex,
+                customIconBgHex = uiState.customIconBgHex
+            ) {
                 if (uiState.showSettingsScreen) {
                     SettingsScreen(
                         themeMode = uiState.themeMode,
                         onThemeModeChange = { viewModel.setThemeMode(it) },
                         onBack = { viewModel.closeSettingsScreen() },
+                        reduceAnimations = uiState.reduceAnimations,
+                        onToggleReduceAnimations = { viewModel.setReduceAnimations(it) },
+                        animationScale = uiState.animationScale,
+                        onAnimationScaleChange = { viewModel.setAnimationScale(it) },
+                        defaultSearchEngine = uiState.defaultSearchEngine,
+                        onDefaultSearchEngineChange = { viewModel.setDefaultSearchEngine(it) },
                         activeToolIds = uiState.activeToolMenuIds,
                         availableToolIds = uiState.availableToolMenuIds,
                         onRemoveTool = { viewModel.removeToolFromMenu(it) },
@@ -71,7 +89,18 @@ class MainActivity : ComponentActivity() {
                         onOpenBookmarks = {
                             viewModel.closeSettingsScreen()
                             viewModel.openBookmarkScreen()
-                        }
+                        },
+                        uiGradientId = uiState.uiGradientId,
+                        onSelectUiGradient = { viewModel.setUiGradient(it) },
+                        wallpaperMode = uiState.wallpaperMode,
+                        wallpaperStyle = uiState.wallpaperStyle,
+                        onSelectWallpaper = { mode, style -> viewModel.setHomeWallpaper(mode, style) },
+                        customPrimaryHex = uiState.customPrimaryHex,
+                        customIconBgHex = uiState.customIconBgHex,
+                        isDualColorActive = uiState.isDualColorActive,
+                        onSelectNormalColor = { viewModel.setSingleAppColor(it) },
+                        onSelectDualColor = { dark, light -> viewModel.setDualAppColor(dark, light) },
+                        onResetColor = { viewModel.resetAppColor() }
                     )
                 } else if (uiState.showHistoryScreen) {
                     HistoryScreen(
@@ -130,9 +159,18 @@ class MainActivity : ComponentActivity() {
                         onClose = { viewModel.closeBookmarkScreen() }
                     )
                 } else {
+                    val appTheme = LocalAppTheme.current
                     Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        containerColor = MaterialTheme.colorScheme.background,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(
+                                if (appTheme.uiGradientBrush != null) {
+                                    Modifier.background(appTheme.uiGradientBrush!!)
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        containerColor = if (appTheme.uiGradientColors != null) Color.Transparent else MaterialTheme.colorScheme.background,
                         bottomBar = {
                             BottomToolbar(
                                 canGoBack = uiState.canGoBack,

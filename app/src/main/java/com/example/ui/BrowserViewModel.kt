@@ -61,7 +61,16 @@ data class BrowserUiState(
     val activeToolMenuIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_IDS,
     val availableToolMenuIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_AVAILABLE_IDS,
     val activeToolbarToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_TOOLBAR_IDS,
-    val availableToolbarToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_AVAILABLE_TOOLBAR_IDS
+    val availableToolbarToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_AVAILABLE_TOOLBAR_IDS,
+    val reduceAnimations: Boolean = false,
+    val animationScale: Float = 0.75f,
+    val defaultSearchEngine: String = "Google",
+    val uiGradientId: String? = null,
+    val wallpaperMode: String = "SYSTEM",
+    val wallpaperStyle: String = "mesh_prism",
+    val customPrimaryHex: Long? = null,
+    val customIconBgHex: Long? = null,
+    val isDualColorActive: Boolean = false
 )
 
 class BrowserViewModel : ViewModel() {
@@ -1044,5 +1053,55 @@ class BrowserViewModel : ViewModel() {
 
     fun setThemeMode(mode: ThemeMode) {
         _uiState.update { it.copy(themeMode = mode) }
+    }
+
+    fun setReduceAnimations(reduce: Boolean) {
+        _uiState.update { it.copy(reduceAnimations = reduce) }
+    }
+
+    fun setAnimationScale(scale: Float) {
+        _uiState.update { it.copy(animationScale = scale) }
+    }
+
+    fun setDefaultSearchEngine(engine: String) {
+        _uiState.update { it.copy(defaultSearchEngine = engine) }
+    }
+
+    fun setUiGradient(gradientId: String?) {
+        _uiState.update { it.copy(uiGradientId = gradientId) }
+    }
+
+    fun setHomeWallpaper(mode: String, style: String = _uiState.value.wallpaperStyle) {
+        _uiState.update { it.copy(wallpaperMode = mode, wallpaperStyle = style) }
+    }
+
+    fun setSingleAppColor(colorHex: Long) {
+        _uiState.update {
+            it.copy(
+                customPrimaryHex = colorHex,
+                customIconBgHex = null,
+                isDualColorActive = false
+            )
+        }
+    }
+
+    fun setDualAppColor(darkHex: Long, lightHex: Long) {
+        _uiState.update {
+            it.copy(
+                customPrimaryHex = darkHex,
+                customIconBgHex = lightHex,
+                isDualColorActive = true
+            )
+        }
+    }
+
+    fun resetAppColor() {
+        _uiState.update {
+            it.copy(
+                customPrimaryHex = null,
+                customIconBgHex = null,
+                isDualColorActive = false
+            )
+        }
     }
 }

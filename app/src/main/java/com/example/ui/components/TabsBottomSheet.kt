@@ -100,8 +100,8 @@ fun TabsBottomSheet(
     val activeList = if (isIncognitoMode) incognitoTabs else tabs
     val listState = rememberLazyListState()
 
-    // Dynamic color tokens for dark/light mode
-    val panelBgColor = if (isDarkTheme) Color(0xFF101411) else Color(0xFFF7FAF7)
+    // Dynamic color tokens for dark/light mode (80% of white for tab menu background, never pure white)
+    val panelBgColor = if (isDarkTheme) Color(0xFF101411) else com.example.ui.theme.EightyPercentWhite
     val dragHandleColor = if (isDarkTheme) Color.White.copy(alpha = 0.35f) else Color(0xFF94A3B8)
     val pillContainerBg = if (isDarkTheme) Color(0xFF1E1E1E) else Color(0xFFE2E8F0)
     val pillContainerBorder = if (isDarkTheme) Color.White.copy(alpha = 0.18f) else Color(0xFFCBD5E1)

@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -201,8 +203,17 @@ fun SquareRoundedSpeedDialItem(
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     val appTheme = LocalAppTheme.current
-    val iconBgColor = appTheme.iconBg
-    val iconOutline = appTheme.iconBorder
+    val itemBaseColor = Color(item.colorHex)
+    val iconOutline = if (appTheme.customIconBgColor != null) appTheme.iconBorder else itemBaseColor.copy(alpha = 0.35f)
+
+    // Gradient mix for icon background blending item colour with theme icon background
+    val iconGradientMix = Brush.linearGradient(
+        colors = listOf(
+            itemBaseColor.copy(alpha = if (appTheme.isDark) 0.45f else 0.30f),
+            appTheme.iconBg,
+            itemBaseColor.copy(alpha = if (appTheme.isDark) 0.22f else 0.12f)
+        )
+    )
 
     Column(
         modifier = modifier
@@ -213,7 +224,7 @@ fun SquareRoundedSpeedDialItem(
             modifier = Modifier.size(52.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Square round corner shape
+            // Square round corner shape with colour gradient mix background
             Surface(
                 modifier = Modifier
                     .size(52.dp)
@@ -228,12 +239,15 @@ fun SquareRoundedSpeedDialItem(
                         shape = RoundedCornerShape(14.dp)
                     )
                     .testTag("speed_dial_${item.title.lowercase()}"),
-                color = iconBgColor,
+                color = Color.Transparent,
                 shape = RoundedCornerShape(14.dp),
                 shadowElevation = 2.dp
             ) {
                 Box(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(iconGradientMix)
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     // Website Logo / Favicon using Coil
@@ -341,11 +355,18 @@ fun FallbackLogoBadge(
     colorHex: Long,
     modifier: Modifier = Modifier
 ) {
+    val baseColor = Color(colorHex)
+    val badgeGradient = Brush.linearGradient(
+        listOf(
+            baseColor,
+            baseColor.copy(alpha = 0.82f)
+        )
+    )
     Box(
         modifier = modifier
             .size(30.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(colorHex)),
+            .background(badgeGradient),
         contentAlignment = Alignment.Center
     ) {
         Text(

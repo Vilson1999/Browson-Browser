@@ -22,14 +22,6 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
-  splits {
-    abi {
-      isEnable = true
-      reset()
-      include("arm64-v8a", "armeabi-v7a")
-      isUniversalApk = true
-    }
-  }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
   // and updating Android apps in AI Studio.
