@@ -1,0 +1,85 @@
+Downloading https://services.gradle.org/distributions/gradle-9.3.1-bin.zip
+.............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+
+Welcome to Gradle 9.3.1!
+
+Here are the highlights of this release:
+ - Test reporting improvements
+ - Error and warning improvements
+ - Build authoring improvements
+
+For more details see https://docs.gradle.org/9.3.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: testDebugUnitTest
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+
+> Task :app:processDebugGoogleServices
+File google-services.json is missing.
+The Google Services Plugin cannot function without it.
+Searched locations: /home/runner/work/Browson-Browser/Browson-Browser/app/src/debug/google-services.json, /home/runner/work/Browson-Browser/Browson-Browser/app/src/debug/google-services.json, /home/runner/work/Browson-Browser/Browson-Browser/app/src/google-services.json, /home/runner/work/Browson-Browser/Browson-Browser/app/src/debug/google-services.json, /home/runner/work/Browson-Browser/Browson-Browser/app/src/Debug/google-services.json, /home/runner/work/Browson-Browser/Browson-Browser/app/google-services.json
+
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResources
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:packageDebugResources
+> Task :app:javaPreCompileDebug
+> Task :app:mapDebugSourceSetPaths
+> Task :app:processDebugNavigationResources
+> Task :app:checkDebugAarMetadata
+> Task :app:compileDebugNavigationResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:parseDebugLocalResources
+> Task :app:extractDeepLinksDebug
+> Task :app:generateDebugRFile
+> Task :app:processDebugMainManifest
+> Task :app:mergeDebugAssets
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:processDebugUnitTestManifest
+> Task :app:mergeDebugResources
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/Browson-Browser/Browson-Browser/app/src/main/java/com/example/model/BrowserTools.kt:54:44 'val Icons.Filled.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.MenuBook.
+w: file:///home/runner/work/Browson-Browser/Browson-Browser/app/src/main/java/com/example/ui/DownloadScreen.kt:609:38 'val Icons.Filled.InsertDriveFile: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.InsertDriveFile.
+w: file:///home/runner/work/Browson-Browser/Browson-Browser/app/src/main/java/com/example/ui/theme/Theme.kt:287:24 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Browson-Browser/Browson-Browser/app/src/main/java/com/example/ui/theme/Theme.kt:289:24 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+
+> Task :app:processDebugJavaRes
+> Task :app:compileDebugJavaWithJavac
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+
+> Task :app:testDebugUnitTest
+
+ExampleRobolectricTest > classMethod FAILED
+    java.lang.UnsupportedOperationException at DefaultSdkProvider.java:170
+
+8 tests completed, 1 failed
+
+> Task :app:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/Browson-Browser/Browson-Browser/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 2m 18s
+33 actionable tasks: 33 executed
+Configuration cache entry stored.
