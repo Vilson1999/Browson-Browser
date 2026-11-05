@@ -42,9 +42,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
+import com.example.ui.theme.LocalAppTheme
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Home
@@ -122,14 +125,18 @@ fun SettingsScreen(
     onRemoveToolbarTool: (String) -> Boolean = { false },
     onAddToolbarTool: (String) -> Boolean = { false },
     onMoveToolbarTool: (Int, Int) -> Unit = { _, _ -> },
-    onResetToolbar: () -> Unit = {}
+    onResetToolbar: () -> Unit = {},
+    onOpenBookmarks: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val appTheme = LocalAppTheme.current
     val isDark = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
+        ThemeMode.AMOLED -> true
     }
+    val isAmoled = appTheme.isAmoled
 
     // Active sub-page state: when null, shows the 7 main menus; when set, shows that menu's new page/window
     var currentSubPage by remember { mutableStateOf<SettingsMenuPage?>(null) }
@@ -183,13 +190,17 @@ fun SettingsScreen(
     var autoUpdateFilters by remember { mutableStateOf(true) }
 
     // Colors matching Browson palette
-    val bgColor = if (isDark) Color(0xFF101411) else Color(0xFFF7FAF7)
-    val cardBgColor = if (isDark) Color(0xFF1B231D) else Color(0xFFFFFFFF)
-    val cardBorderColor = if (isDark) Color(0xFF28362B) else Color(0xFFE2EBE3)
-    val accentTint = if (isDark) Color(0xFF81C784) else Color(0xFF1E5E3A)
-    val badgeBgColor = if (isDark) Color(0xFF233226) else Color(0xFFEAF5EE)
-    val primaryTextColor = if (isDark) Color(0xFFE2E8F0) else Color(0xFF19251D)
-    val secondaryTextColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF5E6D62)
+    val bgColor = appTheme.background
+    val cardBgColor = appTheme.cardBg
+    val cardBorderColor = appTheme.cardBorder
+    val accentTint = appTheme.primary
+    val badgeBgColor = when {
+        isAmoled -> Color(0xFF141416)
+        isDark -> Color(0xFF1E293B)
+        else -> Color(0xFFEAF5EE)
+    }
+    val primaryTextColor = appTheme.onSurface
+    val secondaryTextColor = appTheme.onSurfaceVariant
 
     // Animated transition between main settings menu and sub-page windows
     AnimatedContent(
@@ -286,6 +297,112 @@ fun SettingsScreen(
                         }
                     }
 
+                    // Display Theme Quick Switcher Card
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = if (isAmoled) 1.5.dp else 1.dp,
+                                    color = cardBorderColor,
+                                    shape = RoundedCornerShape(16.dp)
+                                ),
+                            colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = accentTint.copy(alpha = 0.15f),
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Palette,
+                                                contentDescription = null,
+                                                tint = accentTint,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "Display Theme",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = primaryTextColor
+                                        )
+                                        Text(
+                                            text = "Choose Light, Dark, or true AMOLED black mode",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = secondaryTextColor
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    listOf(
+                                        Triple(ThemeMode.LIGHT, "Light", Icons.Filled.LightMode),
+                                        Triple(ThemeMode.DARK, "Dark", Icons.Filled.DarkMode),
+                                        Triple(ThemeMode.AMOLED, "AMOLED", Icons.Filled.Brightness4),
+                                        Triple(ThemeMode.SYSTEM, "Auto", Icons.Filled.BrightnessAuto)
+                                    ).forEach { (mode, label, icon) ->
+                                        val isSelected = themeMode == mode
+                                        val chipBg = if (isSelected) {
+                                            accentTint.copy(alpha = 0.18f)
+                                        } else {
+                                            badgeBgColor
+                                        }
+                                        val chipBorder = if (isSelected) accentTint else cardBorderColor
+
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = chipBg,
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, chipBorder),
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .clickable { onThemeModeChange(mode) }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxSize(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = label,
+                                                    tint = if (isSelected) accentTint else secondaryTextColor,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(3.dp))
+                                                Text(
+                                                    text = label,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) primaryTextColor else secondaryTextColor
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // 1. Home Screen Menu Card
                     item {
                         SettingsMenuItemCard(
@@ -342,6 +459,22 @@ fun SettingsScreen(
                             icon = Icons.Filled.ViewStream,
                             onClick = { currentSubPage = SettingsMenuPage.TOOLBAR },
                             testTag = "settings_menu_toolbar",
+                            badgeBgColor = badgeBgColor,
+                            accentTint = accentTint,
+                            cardBgColor = cardBgColor,
+                            primaryTextColor = primaryTextColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+                    }
+
+                    // Bookmarks Menu Card
+                    item {
+                        SettingsMenuItemCard(
+                            title = stringResource(R.string.settings_bookmarks),
+                            subtitle = stringResource(R.string.settings_bookmarks_desc),
+                            icon = Icons.Filled.Bookmark,
+                            onClick = onOpenBookmarks,
+                            testTag = "settings_menu_bookmarks",
                             badgeBgColor = badgeBgColor,
                             accentTint = accentTint,
                             cardBgColor = cardBgColor,
@@ -600,30 +733,38 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
                                         FilterChip(
-                                            selected = themeMode == ThemeMode.SYSTEM,
-                                            onClick = { onThemeModeChange(ThemeMode.SYSTEM) },
-                                            label = { Text("System Default", fontSize = 11.sp) },
+                                            selected = themeMode == ThemeMode.LIGHT,
+                                            onClick = { onThemeModeChange(ThemeMode.LIGHT) },
+                                            label = { Text("Light", fontSize = 11.sp) },
                                             leadingIcon = {
-                                                Icon(Icons.Filled.BrightnessAuto, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                Icon(Icons.Filled.LightMode, contentDescription = null, modifier = Modifier.size(14.dp))
                                             }
                                         )
                                         FilterChip(
                                             selected = themeMode == ThemeMode.DARK,
                                             onClick = { onThemeModeChange(ThemeMode.DARK) },
-                                            label = { Text("Black", fontSize = 11.sp) },
+                                            label = { Text("Dark", fontSize = 11.sp) },
                                             leadingIcon = {
                                                 Icon(Icons.Filled.DarkMode, contentDescription = null, modifier = Modifier.size(14.dp))
                                             }
                                         )
                                         FilterChip(
-                                            selected = themeMode == ThemeMode.LIGHT,
-                                            onClick = { onThemeModeChange(ThemeMode.LIGHT) },
-                                            label = { Text("White", fontSize = 11.sp) },
+                                            selected = themeMode == ThemeMode.AMOLED,
+                                            onClick = { onThemeModeChange(ThemeMode.AMOLED) },
+                                            label = { Text("AMOLED", fontSize = 11.sp) },
                                             leadingIcon = {
-                                                Icon(Icons.Filled.LightMode, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                Icon(Icons.Filled.Brightness4, contentDescription = null, modifier = Modifier.size(14.dp))
+                                            }
+                                        )
+                                        FilterChip(
+                                            selected = themeMode == ThemeMode.SYSTEM,
+                                            onClick = { onThemeModeChange(ThemeMode.SYSTEM) },
+                                            label = { Text("Auto", fontSize = 11.sp) },
+                                            leadingIcon = {
+                                                Icon(Icons.Filled.BrightnessAuto, contentDescription = null, modifier = Modifier.size(14.dp))
                                             }
                                         )
                                     }

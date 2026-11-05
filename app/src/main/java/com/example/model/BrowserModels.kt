@@ -12,6 +12,13 @@ data class SpeedDialItem(
         get() = customIconUrl ?: "https://www.google.com/s2/favicons?sz=128&domain_url=${url.trim()}"
 }
 
+data class BookmarkFolder(
+    val id: String,
+    val name: String,
+    val colorHex: Long = 0xFF10B981,
+    val isDefault: Boolean = false
+)
+
 data class BookmarkItem(
     val id: String,
     val title: String,
@@ -19,7 +26,10 @@ data class BookmarkItem(
     val initial: String = "",
     val colorHex: Long = 0xFF10B981,
     val customIconUrl: String? = null,
-    val showOnHomeScreen: Boolean = true
+    val showOnHomeScreen: Boolean = true,
+    val folderId: String = "folder-mobile",
+    val folderName: String = "Mobile Bookmarks",
+    val timestamp: Long = System.currentTimeMillis()
 ) {
     val faviconUrl: String
         get() = customIconUrl ?: "https://www.google.com/s2/favicons?sz=128&domain_url=${url.trim()}"

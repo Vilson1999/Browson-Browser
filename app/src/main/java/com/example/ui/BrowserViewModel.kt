@@ -1,6 +1,7 @@
 package com.example.ui
 
 import androidx.lifecycle.ViewModel
+import com.example.model.BookmarkFolder
 import com.example.model.BookmarkItem
 import com.example.model.BrowserTab
 import com.example.model.DownloadItem
@@ -15,8 +16,17 @@ import java.util.UUID
 enum class ThemeMode {
     SYSTEM,
     DARK,
-    LIGHT
+    LIGHT,
+    AMOLED
 }
+
+val DEFAULT_BOOKMARK_FOLDERS = listOf(
+    BookmarkFolder("folder-all", "All Bookmarks", 0xFF6366F1, isDefault = true),
+    BookmarkFolder("folder-mobile", "Mobile Bookmarks", 0xFF10B981, isDefault = true),
+    BookmarkFolder("folder-favorites", "Favorites", 0xFFF59E0B, isDefault = true),
+    BookmarkFolder("folder-reading", "Reading List", 0xFF3B82F6, isDefault = true),
+    BookmarkFolder("folder-tools", "Work & Tools", 0xFFEC4899, isDefault = true)
+)
 
 data class BrowserUiState(
     val currentUrl: String = "",
@@ -27,6 +37,8 @@ data class BrowserUiState(
     val canGoForward: Boolean = false,
     val speedDials: List<SpeedDialItem> = emptyList(),
     val bookmarks: List<BookmarkItem> = emptyList(),
+    val bookmarkFolders: List<BookmarkFolder> = DEFAULT_BOOKMARK_FOLDERS,
+    val selectedBookmarkFolderId: String = "folder-all",
     val tabs: List<BrowserTab> = emptyList(),
     val incognitoTabs: List<BrowserTab> = emptyList(),
     val isIncognitoMode: Boolean = false,
@@ -43,6 +55,7 @@ data class BrowserUiState(
     val showSettingsScreen: Boolean = false,
     val showHistoryScreen: Boolean = false,
     val showDownloadScreen: Boolean = false,
+    val showBookmarkScreen: Boolean = false,
     val historyItems: List<HistoryItem> = emptyList(),
     val downloadItems: List<DownloadItem> = emptyList(),
     val activeToolMenuIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_IDS,
@@ -66,11 +79,11 @@ class BrowserViewModel : ViewModel() {
                 SpeedDialItem(UUID.randomUUID().toString(), "BBC News", "https://www.bbc.com", "B", 0xFFBB1919)
             ),
             bookmarks = listOf(
-                BookmarkItem(UUID.randomUUID().toString(), "Android Developers", "https://developer.android.com", "AD", 0xFF3DDC84),
-                BookmarkItem(UUID.randomUUID().toString(), "TechCrunch", "https://techcrunch.com", "TC", 0xFF0A9928),
-                BookmarkItem(UUID.randomUUID().toString(), "Hacker News", "https://news.ycombinator.com", "HN", 0xFFFF6600),
-                BookmarkItem(UUID.randomUUID().toString(), "Medium", "https://medium.com", "M", 0xFF000000),
-                BookmarkItem(UUID.randomUUID().toString(), "Weather", "https://weather.com", "W", 0xFF1B73E8)
+                BookmarkItem(UUID.randomUUID().toString(), "Android Developers", "https://developer.android.com", "AD", 0xFF3DDC84, folderId = "folder-tools", folderName = "Work & Tools"),
+                BookmarkItem(UUID.randomUUID().toString(), "TechCrunch", "https://techcrunch.com", "TC", 0xFF0A9928, folderId = "folder-mobile", folderName = "Mobile Bookmarks"),
+                BookmarkItem(UUID.randomUUID().toString(), "Hacker News", "https://news.ycombinator.com", "HN", 0xFFFF6600, folderId = "folder-reading", folderName = "Reading List"),
+                BookmarkItem(UUID.randomUUID().toString(), "Medium", "https://medium.com", "M", 0xFF000000, folderId = "folder-reading", folderName = "Reading List"),
+                BookmarkItem(UUID.randomUUID().toString(), "Weather", "https://weather.com", "W", 0xFF1B73E8, folderId = "folder-favorites", folderName = "Favorites")
             ),
             tabs = listOf(
                 BrowserTab("tab-1", "Home", "", isHome = true)
@@ -339,7 +352,56 @@ class BrowserViewModel : ViewModel() {
         }
     }
 
-    // Bookmark actions
+    // Bookmark actions and screen management
+    fun openBookmarkScreen() {
+        _uiState.update {
+            it.copy(
+                showBookmarkScreen = true,
+                showMenuSheet = false,
+                showTabsSheet = false
+            )
+        }
+    }
+
+    fun closeBookmarkScreen() {
+        _uiState.update { it.copy(showBookmarkScreen = false) }
+    }
+
+    fun selectBookmarkFolder(folderId: String) {
+        _uiState.update { it.copy(selectedBookmarkFolderId = folderId) }
+    }
+
+    fun createBookmarkFolder(name: String, colorHex: Long) {
+        if (name.isBlank()) return
+        val newFolder = BookmarkFolder(
+            id = "folder-" + UUID.randomUUID().toString().take(8),
+            name = name.trim(),
+            colorHex = colorHex
+        )
+        _uiState.update { state ->
+            state.copy(
+                bookmarkFolders = state.bookmarkFolders + newFolder,
+                selectedBookmarkFolderId = newFolder.id
+            )
+        }
+    }
+
+    fun deleteBookmarkFolder(folderId: String) {
+        _uiState.update { state ->
+            val fallbackFolder = state.bookmarkFolders.firstOrNull { it.id == "folder-mobile" }
+                ?: state.bookmarkFolders.firstOrNull { it.id != "folder-all" }
+            val fallbackId = fallbackFolder?.id ?: "folder-mobile"
+            val fallbackName = fallbackFolder?.name ?: "Mobile Bookmarks"
+            state.copy(
+                bookmarkFolders = state.bookmarkFolders.filterNot { it.id == folderId && !it.isDefault },
+                bookmarks = state.bookmarks.map { bm ->
+                    if (bm.folderId == folderId) bm.copy(folderId = fallbackId, folderName = fallbackName) else bm
+                },
+                selectedBookmarkFolderId = if (state.selectedBookmarkFolderId == folderId) "folder-all" else state.selectedBookmarkFolderId
+            )
+        }
+    }
+
     fun openAddBookmarkDialog() {
         _uiState.update { it.copy(showAddBookmarkDialog = true) }
     }
@@ -348,18 +410,31 @@ class BrowserViewModel : ViewModel() {
         _uiState.update { it.copy(showAddBookmarkDialog = false) }
     }
 
-    fun addBookmark(title: String, url: String) {
+    fun addBookmark(
+        title: String,
+        url: String,
+        folderId: String? = null,
+        folderName: String? = null
+    ) {
         if (title.isBlank() || url.isBlank()) return
         val formattedUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) "https://$url" else url
         val initial = title.trim().take(2).uppercase()
         val colors = listOf(0xFF10B981, 0xFFE53935, 0xFF6366F1, 0xFF06B6D4, 0xFFF97316, 0xFF14B8A6)
         val randomColor = colors[(_uiState.value.bookmarks.size) % colors.size]
+
+        val targetFolderId = folderId
+            ?: if (_uiState.value.selectedBookmarkFolderId != "folder-all") _uiState.value.selectedBookmarkFolderId else "folder-mobile"
+        val targetFolderName = folderName
+            ?: _uiState.value.bookmarkFolders.firstOrNull { it.id == targetFolderId }?.name ?: "Mobile Bookmarks"
+
         val newItem = BookmarkItem(
             id = UUID.randomUUID().toString(),
             title = title.trim(),
             url = formattedUrl,
             initial = initial,
-            colorHex = randomColor
+            colorHex = randomColor,
+            folderId = targetFolderId,
+            folderName = targetFolderName
         )
         _uiState.update {
             it.copy(
@@ -373,6 +448,190 @@ class BrowserViewModel : ViewModel() {
         _uiState.update { state ->
             state.copy(bookmarks = state.bookmarks.filterNot { it.id == id })
         }
+    }
+
+    fun deleteBookmarks(ids: Set<String>?) {
+        _uiState.update { state ->
+            if (ids == null) {
+                // Clear all bookmarks in active folder or all if folder-all
+                val activeFolder = state.selectedBookmarkFolderId
+                if (activeFolder == "folder-all") {
+                    state.copy(bookmarks = emptyList())
+                } else {
+                    state.copy(bookmarks = state.bookmarks.filterNot { it.folderId == activeFolder })
+                }
+            } else {
+                state.copy(bookmarks = state.bookmarks.filterNot { it.id in ids })
+            }
+        }
+    }
+
+    fun addBookmarkToSpeedDial(bookmark: BookmarkItem): Boolean {
+        val existing = _uiState.value.speedDials.any { it.url.equals(bookmark.url.trim(), ignoreCase = true) }
+        if (existing) {
+            return false
+        }
+        val newSpeedDial = SpeedDialItem(
+            id = UUID.randomUUID().toString(),
+            title = bookmark.title,
+            url = bookmark.url,
+            initial = bookmark.initial.ifBlank { bookmark.title.take(2).uppercase() },
+            colorHex = bookmark.colorHex,
+            customIconUrl = bookmark.customIconUrl
+        )
+        _uiState.update { it.copy(speedDials = it.speedDials + newSpeedDial) }
+        return true
+    }
+
+    fun moveBookmarkToFolder(bookmarkId: String, newFolderId: String, newFolderName: String) {
+        _uiState.update { state ->
+            state.copy(
+                bookmarks = state.bookmarks.map { bm ->
+                    if (bm.id == bookmarkId) bm.copy(folderId = newFolderId, folderName = newFolderName) else bm
+                }
+            )
+        }
+    }
+
+    fun exportBookmarksAsJson(): String {
+        val items = _uiState.value.bookmarks.map { bm ->
+            """  {
+    "title": "${escapeJson(bm.title)}",
+    "url": "${escapeJson(bm.url)}",
+    "folder": "${escapeJson(bm.folderName)}",
+    "folderId": "${escapeJson(bm.folderId)}",
+    "colorHex": ${bm.colorHex}
+  }"""
+        }
+        return "[\n" + items.joinToString(",\n") + "\n]"
+    }
+
+    private fun escapeJson(str: String): String {
+        return str.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+    }
+
+    fun exportBookmarksAsHtml(): String {
+        val sb = StringBuilder()
+        sb.append("<!DOCTYPE NETSCAPE-Bookmark-file-1>\n")
+        sb.append("<!-- This is an automatically generated file by Browson. -->\n")
+        sb.append("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=UTF-8\">\n")
+        sb.append("<TITLE>Browson Bookmarks</TITLE>\n")
+        sb.append("<H1>Bookmarks</H1>\n")
+        sb.append("<DL><p>\n")
+
+        val grouped = _uiState.value.bookmarks.groupBy { it.folderName }
+        grouped.forEach { (folderName, items) ->
+            sb.append("    <DT><H3>").append(folderName).append("</H3>\n")
+            sb.append("    <DL><p>\n")
+            items.forEach { bm ->
+                sb.append("        <DT><A HREF=\"").append(bm.url).append("\">").append(bm.title).append("</A>\n")
+            }
+            sb.append("    </DL><p>\n")
+        }
+        sb.append("</DL><p>\n")
+        return sb.toString()
+    }
+
+    fun importBookmarks(content: String, targetFolderId: String, targetFolderName: String): Int {
+        if (content.isBlank()) return 0
+        val newBookmarks = mutableListOf<BookmarkItem>()
+        val colors = listOf(0xFF10B981, 0xFFE53935, 0xFF6366F1, 0xFF06B6D4, 0xFFF97316, 0xFF14B8A6, 0xFF8B5CF6)
+
+        val trimmed = content.trim()
+        // Try JSON array first via pure regex parser
+        if (trimmed.startsWith("[")) {
+            val objectRegex = java.util.regex.Pattern.compile("\\{([^{}]+)\\}")
+            val objMatcher = objectRegex.matcher(trimmed)
+            while (objMatcher.find()) {
+                val block = objMatcher.group(1) ?: ""
+                val titleMatcher = java.util.regex.Pattern.compile("\"title\"\\s*:\\s*\"([^\"]*)\"").matcher(block)
+                val urlMatcher = java.util.regex.Pattern.compile("\"url\"\\s*:\\s*\"([^\"]*)\"").matcher(block)
+                val folderMatcher = java.util.regex.Pattern.compile("\"folder\"\\s*:\\s*\"([^\"]*)\"").matcher(block)
+                val folderIdMatcher = java.util.regex.Pattern.compile("\"folderId\"\\s*:\\s*\"([^\"]*)\"").matcher(block)
+
+                val url = if (urlMatcher.find()) urlMatcher.group(1)?.trim() ?: "" else ""
+                val title = if (titleMatcher.find()) titleMatcher.group(1)?.trim() ?: "" else "Bookmark"
+                val folder = if (folderMatcher.find()) folderMatcher.group(1)?.trim() ?: targetFolderName else targetFolderName
+                val folderId = if (folderIdMatcher.find()) folderIdMatcher.group(1)?.trim() ?: targetFolderId else targetFolderId
+
+                if (url.isNotBlank()) {
+                    val formattedUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) "https://$url" else url
+                    newBookmarks.add(
+                        BookmarkItem(
+                            id = UUID.randomUUID().toString(),
+                            title = if (title.isBlank()) url else title,
+                            url = formattedUrl,
+                            initial = (if (title.isBlank()) url else title).take(2).uppercase(),
+                            colorHex = colors[newBookmarks.size % colors.size],
+                            folderId = if (folderId.isNotBlank()) folderId else targetFolderId,
+                            folderName = if (folder.isNotBlank()) folder else targetFolderName
+                        )
+                    )
+                }
+            }
+        }
+
+        // If not JSON or JSON was empty, try regex for HTML <a href="...">...</a>
+        if (newBookmarks.isEmpty() && (trimmed.contains("<a", ignoreCase = true) || trimmed.contains("<A", ignoreCase = true))) {
+            val pattern = java.util.regex.Pattern.compile("<a\\s+(?:[^>]*?\\s+)?href=[\"']([^\"']*)[\"'][^>]*>(.*?)<\\/a>", java.util.regex.Pattern.CASE_INSENSITIVE)
+            val matcher = pattern.matcher(trimmed)
+            while (matcher.find()) {
+                val url = matcher.group(1)?.trim() ?: ""
+                var title = matcher.group(2)?.trim() ?: ""
+                title = title.replace(Regex("<.*?>"), "").trim()
+                if (url.isNotBlank()) {
+                    val formattedUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) "https://$url" else url
+                    newBookmarks.add(
+                        BookmarkItem(
+                            id = UUID.randomUUID().toString(),
+                            title = if (title.isBlank()) url else title,
+                            url = formattedUrl,
+                            initial = (if (title.isBlank()) url else title).take(2).uppercase(),
+                            colorHex = colors[newBookmarks.size % colors.size],
+                            folderId = targetFolderId,
+                            folderName = targetFolderName
+                        )
+                    )
+                }
+            }
+        }
+
+        // If still empty, parse line-by-line URLs
+        if (newBookmarks.isEmpty()) {
+            trimmed.lines().forEach { line ->
+                val clean = line.trim()
+                if (clean.isNotBlank()) {
+                    val parts = clean.split(",", "|", "\t", limit = 2)
+                    val urlCandidate = if (parts.size > 1) parts[1].trim() else parts[0].trim()
+                    val titleCandidate = if (parts.size > 1) parts[0].trim() else clean
+                    if (urlCandidate.contains(".") && !urlCandidate.contains(" ")) {
+                        val formattedUrl = if (!urlCandidate.startsWith("http://") && !urlCandidate.startsWith("https://")) "https://$urlCandidate" else urlCandidate
+                        newBookmarks.add(
+                            BookmarkItem(
+                                id = UUID.randomUUID().toString(),
+                                title = titleCandidate,
+                                url = formattedUrl,
+                                initial = titleCandidate.take(2).uppercase(),
+                                colorHex = colors[newBookmarks.size % colors.size],
+                                folderId = targetFolderId,
+                                folderName = targetFolderName
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        if (newBookmarks.isNotEmpty()) {
+            _uiState.update { state ->
+                state.copy(bookmarks = state.bookmarks + newBookmarks)
+            }
+        }
+        return newBookmarks.size
     }
 
     fun removeBookmarkFromHomeScreen(id: String) {
@@ -393,7 +652,13 @@ class BrowserViewModel : ViewModel() {
         _uiState.update { it.copy(editingBookmarkItem = null) }
     }
 
-    fun updateBookmark(id: String, newTitle: String, newUrl: String) {
+    fun updateBookmark(
+        id: String,
+        newTitle: String,
+        newUrl: String,
+        folderId: String? = null,
+        folderName: String? = null
+    ) {
         if (newTitle.isBlank() || newUrl.isBlank()) return
         val formattedUrl = if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) "https://$newUrl" else newUrl
         val initial = newTitle.trim().take(2).uppercase()
@@ -404,7 +669,9 @@ class BrowserViewModel : ViewModel() {
                         item.copy(
                             title = newTitle.trim(),
                             url = formattedUrl,
-                            initial = initial
+                            initial = initial,
+                            folderId = folderId ?: item.folderId,
+                            folderName = folderName ?: item.folderName
                         )
                     } else {
                         item

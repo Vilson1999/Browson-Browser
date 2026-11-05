@@ -1,12 +1,11 @@
 package com.example.ui.components
 
-import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,28 +17,21 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material.icons.filled.DesktopWindows
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Flight
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -67,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.ThemeMode
+import com.example.ui.theme.LocalAppTheme
 
 data class ToolMenuItem(
     val id: String,
@@ -86,33 +79,43 @@ fun MenuBottomSheet(
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit = {},
     onOpenDownloads: () -> Unit = {},
+    onOpenBookmarks: () -> Unit = {},
     activeToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_IDS,
     currentUrl: String,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val isDark = when (themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.DARK -> true
-        ThemeMode.LIGHT -> false
-    }
+    val appTheme = LocalAppTheme.current
 
     var isDesktopSite by remember { mutableStateOf(false) }
-    var showSettingsPanel by remember { mutableStateOf(false) }
 
-    // Colors matching screenshots (mint/sage tint for pills)
-    val pillBgColor = if (isDark) Color(0xFF233027) else Color(0xFFEAF4EE)
-    val pillIconTint = if (isDark) Color(0xFF81C784) else Color(0xFF1E5E3A)
-    val pillTextColor = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1C2820)
+    // Colors matching active theme
+    val containerColor = when {
+        appTheme.isAmoled -> Color(0xFF000000)
+        appTheme.isDark -> Color(0xFF0F172A)
+        else -> Color(0xFFFFFFFF)
+    }
 
-    // Bottom action pill colors
-    val bottomPillBgColor = if (isDark) Color(0xFF253329) else Color(0xFFEAF4EE)
-    val bottomPillIconTint = if (isDark) Color(0xFFC8E6C9) else Color(0xFF1E3A2B)
-    val closePillBgColor = Color(0xFFBA1A1A) // Crimson red pill from screenshot demo
-    val closePillIconTint = Color.White
+    val toolPillBg = when {
+        appTheme.isAmoled -> Color(0xFF121214)
+        appTheme.isDark -> Color(0xFF1E293B)
+        else -> Color(0xFFF1F5F9)
+    }
 
-    // Dynamically map activeToolIds to ToolMenuItems, chunked in 3 columns
+    val toolPillBorder = when {
+        appTheme.isAmoled -> Color(0xFF27272A)
+        appTheme.isDark -> Color(0xFF334155)
+        else -> Color(0xFFE2E8F0)
+    }
+
+    val bottomActionBg = when {
+        appTheme.isAmoled -> Color(0xFF18181B)
+        appTheme.isDark -> Color(0xFF243044)
+        else -> Color(0xFFE2E8F0)
+    }
+
+    // Map activeToolIds to ToolMenuItems, chunked in 3 columns
     val activeToolItems = activeToolIds.map { id ->
         val tool = com.example.model.BrowserToolCatalog.getTool(id)
         ToolMenuItem(tool.id, tool.icon, tool.label, "tool_${tool.id}")
@@ -122,37 +125,56 @@ fun MenuBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = if (isDark) Color(0xFF131714) else Color(0xFFF9FBF9),
-        scrimColor = Color.Transparent,
+        containerColor = containerColor,
+        scrimColor = Color.Black.copy(alpha = 0.5f),
         dragHandle = {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
+                // Drag Handle
                 Box(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .width(36.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .width(40.dp)
                         .height(4.dp)
                         .clip(CircleShape)
-                        .background(if (isDark) Color(0xFF4A5568) else Color(0xFFCBD5E1))
+                        .background(if (appTheme.isDark) Color(0xFF475569) else Color(0xFFCBD5E1))
                 )
 
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .testTag("tool_menu_close_button")
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
-                        modifier = Modifier.size(20.dp)
+                    Text(
+                        text = "Browser Tools",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = appTheme.onSurface
                     )
+
+                    Surface(
+                        shape = CircleShape,
+                        color = toolPillBg,
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(34.dp)
+                                .testTag("tool_menu_close_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Close",
+                                tint = appTheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 }
             }
         },
@@ -163,191 +185,187 @@ fun MenuBottomSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp)
                 .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
         ) {
-            // Optional expanded Settings section
-            AnimatedVisibility(visible = showSettingsPanel) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(pillBgColor)
-                        .padding(14.dp)
-                ) {
-                    Text(
-                        text = "Theme Wallpaper",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = pillTextColor
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = themeMode == ThemeMode.SYSTEM,
-                            onClick = { onThemeModeChange(ThemeMode.SYSTEM) },
-                            label = { Text("System Default", fontSize = 11.sp) },
-                            leadingIcon = {
-                                Icon(Icons.Filled.BrightnessAuto, contentDescription = null, modifier = Modifier.size(14.dp))
-                            }
-                        )
-                        FilterChip(
-                            selected = themeMode == ThemeMode.DARK,
-                            onClick = { onThemeModeChange(ThemeMode.DARK) },
-                            label = { Text("Black", fontSize = 11.sp) },
-                            leadingIcon = {
-                                Icon(Icons.Filled.DarkMode, contentDescription = null, modifier = Modifier.size(14.dp))
-                            }
-                        )
-                        FilterChip(
-                            selected = themeMode == ThemeMode.LIGHT,
-                            onClick = { onThemeModeChange(ThemeMode.LIGHT) },
-                            label = { Text("White", fontSize = 11.sp) },
-                            leadingIcon = {
-                                Icon(Icons.Filled.LightMode, contentDescription = null, modifier = Modifier.size(14.dp))
-                            }
-                        )
-                    }
-                }
-            }
-
-            // 3 Rows x 3 Columns Tool Menu UI
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Dynamically render rows of 3 columns from active tools
-                chunkedToolRows.forEach { rowTools ->
-                    ToolMenuRow(
-                        items = rowTools,
-                        pillBgColor = pillBgColor,
-                        pillIconTint = pillIconTint,
-                        pillTextColor = pillTextColor,
-                        onItemClick = { item ->
-                            when (item.id) {
-                                "history" -> {
-                                    onDismiss()
-                                    onOpenHistory()
-                                }
-                                "downloads" -> {
-                                    onDismiss()
-                                    onOpenDownloads()
-                                }
-                                "bookmarks" -> {
-                                    onDismiss()
-                                    onAddBookmark()
-                                }
-                                "desktop" -> {
-                                    isDesktopSite = !isDesktopSite
-                                    Toast.makeText(
-                                        context,
-                                        if (isDesktopSite) "Desktop site enabled" else "Mobile site enabled",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                "dark_mode" -> {
-                                    val nextMode = if (isDark) ThemeMode.LIGHT else ThemeMode.DARK
-                                    onThemeModeChange(nextMode)
-                                }
-                                "share" -> {
-                                    val sendIntent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        putExtra(Intent.EXTRA_TEXT, currentUrl.ifBlank { "https://www.google.com" })
-                                        type = "text/plain"
-                                    }
-                                    val shareIntent = Intent.createChooser(sendIntent, "Share via")
-                                    context.startActivity(shareIntent)
-                                }
-                                "offline" -> Toast.makeText(context, "Offline pages opened", Toast.LENGTH_SHORT).show()
-                                "find" -> Toast.makeText(context, "Find on page opened", Toast.LENGTH_SHORT).show()
-                                "translate" -> Toast.makeText(context, "Translating page...", Toast.LENGTH_SHORT).show()
-                                "incognito" -> Toast.makeText(context, "Incognito browsing mode", Toast.LENGTH_SHORT).show()
-                                "reader" -> Toast.makeText(context, "Reader mode activated", Toast.LENGTH_SHORT).show()
-                                "print" -> Toast.makeText(context, "Saving page as PDF...", Toast.LENGTH_SHORT).show()
-                                "screenshot" -> Toast.makeText(context, "Captured screenshot to gallery", Toast.LENGTH_SHORT).show()
-                                "clear_data" -> Toast.makeText(context, "Cache and browsing data cleared", Toast.LENGTH_SHORT).show()
-                                "zoom" -> Toast.makeText(context, "Text zoom set to 100%", Toast.LENGTH_SHORT).show()
-                                "qr_code" -> Toast.makeText(context, "QR Scanner ready", Toast.LENGTH_SHORT).show()
-                                "ad_block" -> Toast.makeText(context, "Ad & Tracker Blocker active", Toast.LENGTH_SHORT).show()
-                                "full_screen" -> Toast.makeText(context, "Full screen mode enabled", Toast.LENGTH_SHORT).show()
-                                "cookie" -> Toast.makeText(context, "Cookie permissions manager", Toast.LENGTH_SHORT).show()
-                                "view_source" -> Toast.makeText(context, "Viewing HTML source code", Toast.LENGTH_SHORT).show()
-                                "voice_search" -> Toast.makeText(context, "Listening for voice search...", Toast.LENGTH_SHORT).show()
-                                "night_light" -> Toast.makeText(context, "Blue light filter enabled", Toast.LENGTH_SHORT).show()
-                                "new_tab" -> Toast.makeText(context, "New tab created", Toast.LENGTH_SHORT).show()
-                                "home" -> Toast.makeText(context, "Home page", Toast.LENGTH_SHORT).show()
-                                else -> Toast.makeText(context, item.label, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Subtle divider between tools grid and bottom actions
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(if (isDark) Color(0xFF222C24) else Color(0xFFE2EBE4))
+            // Theme Mode Selector Bar (Light, Dark, AMOLED, System)
+            ThemeModeSelectorRow(
+                currentMode = themeMode,
+                onModeSelected = onThemeModeChange,
+                isDark = appTheme.isDark,
+                isAmoled = appTheme.isAmoled
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Bottom of tool menu: 4 pill shape background icons without label (from screenshot demo)
-            // (bookmark, add to speed dial, close the app, setting)
+            // 3 Columns Grid of Active Tools
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                chunkedToolRows.forEach { rowTools ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        rowTools.forEach { item ->
+                            ModernToolMenuPill(
+                                item = item,
+                                backgroundColor = toolPillBg,
+                                borderColor = toolPillBorder,
+                                textColor = appTheme.onSurface,
+                                iconTint = appTheme.primary,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    when (item.id) {
+                                        "history" -> {
+                                            onDismiss()
+                                            onOpenHistory()
+                                        }
+                                        "downloads" -> {
+                                            onDismiss()
+                                            onOpenDownloads()
+                                        }
+                                        "bookmarks" -> {
+                                            onDismiss()
+                                            onOpenBookmarks()
+                                        }
+                                        "desktop" -> {
+                                            isDesktopSite = !isDesktopSite
+                                            Toast.makeText(
+                                                context,
+                                                if (isDesktopSite) "Desktop site enabled" else "Mobile site enabled",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        "dark_mode" -> {
+                                            val nextMode = when (themeMode) {
+                                                ThemeMode.LIGHT -> ThemeMode.DARK
+                                                ThemeMode.DARK -> ThemeMode.AMOLED
+                                                ThemeMode.AMOLED -> ThemeMode.LIGHT
+                                                ThemeMode.SYSTEM -> if (appTheme.isDark) ThemeMode.LIGHT else ThemeMode.DARK
+                                            }
+                                            onThemeModeChange(nextMode)
+                                        }
+                                        "share" -> {
+                                            val sendIntent = Intent().apply {
+                                                action = Intent.ACTION_SEND
+                                                putExtra(Intent.EXTRA_TEXT, currentUrl.ifBlank { "https://www.google.com" })
+                                                type = "text/plain"
+                                            }
+                                            val shareIntent = Intent.createChooser(sendIntent, "Share via")
+                                            context.startActivity(shareIntent)
+                                        }
+                                        "offline" -> Toast.makeText(context, "Offline pages opened", Toast.LENGTH_SHORT).show()
+                                        "find" -> Toast.makeText(context, "Find on page opened", Toast.LENGTH_SHORT).show()
+                                        "translate" -> Toast.makeText(context, "Translating page...", Toast.LENGTH_SHORT).show()
+                                        "incognito" -> Toast.makeText(context, "Incognito browsing mode", Toast.LENGTH_SHORT).show()
+                                        "reader" -> Toast.makeText(context, "Reader mode activated", Toast.LENGTH_SHORT).show()
+                                        "print" -> Toast.makeText(context, "Saving page as PDF...", Toast.LENGTH_SHORT).show()
+                                        "screenshot" -> Toast.makeText(context, "Captured screenshot to gallery", Toast.LENGTH_SHORT).show()
+                                        "clear_data" -> Toast.makeText(context, "Cache and browsing data cleared", Toast.LENGTH_SHORT).show()
+                                        "zoom" -> Toast.makeText(context, "Text zoom set to 100%", Toast.LENGTH_SHORT).show()
+                                        "qr_code" -> Toast.makeText(context, "QR Scanner ready", Toast.LENGTH_SHORT).show()
+                                        "ad_block" -> Toast.makeText(context, "Ad & Tracker Blocker active", Toast.LENGTH_SHORT).show()
+                                        "full_screen" -> Toast.makeText(context, "Full screen mode enabled", Toast.LENGTH_SHORT).show()
+                                        "cookie" -> Toast.makeText(context, "Cookie permissions manager", Toast.LENGTH_SHORT).show()
+                                        "view_source" -> Toast.makeText(context, "Viewing HTML source code", Toast.LENGTH_SHORT).show()
+                                        "voice_search" -> Toast.makeText(context, "Listening for voice search...", Toast.LENGTH_SHORT).show()
+                                        "night_light" -> Toast.makeText(context, "Blue light filter enabled", Toast.LENGTH_SHORT).show()
+                                        "new_tab" -> Toast.makeText(context, "New tab created", Toast.LENGTH_SHORT).show()
+                                        "home" -> Toast.makeText(context, "Home page", Toast.LENGTH_SHORT).show()
+                                        else -> Toast.makeText(context, item.label, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            )
+                        }
+                        repeat((3 - rowTools.size).coerceAtLeast(0)) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Subtle divider
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(toolPillBorder)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Bottom 4 Action Pills (Bookmark, Speed Dial, Theme Toggle, Settings)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. Bookmark icon pill (without label)
-                BottomActionPill(
-                    icon = Icons.Filled.BookmarkBorder,
-                    contentDescription = stringResource(R.string.add_bookmark),
-                    backgroundColor = bottomPillBgColor,
-                    iconTint = bottomPillIconTint,
+                // 1. Bookmark pill
+                ModernBottomActionPill(
+                    icon = Icons.Filled.Bookmark,
+                    contentDescription = stringResource(R.string.bookmark_menu_title),
+                    backgroundColor = bottomActionBg,
+                    iconTint = if (appTheme.isDark) Color(0xFF34D399) else Color(0xFF059669),
                     testTag = "tool_menu_bottom_bookmark",
                     modifier = Modifier.weight(1f),
-                    onClick = onAddBookmark
+                    onClick = {
+                        onDismiss()
+                        onOpenBookmarks()
+                    }
                 )
 
-                // 2. Add to speed dial icon pill (without label)
-                BottomActionPill(
+                // 2. Add to Speed Dial pill
+                ModernBottomActionPill(
                     icon = Icons.Filled.AddCircleOutline,
                     contentDescription = stringResource(R.string.tool_add_speed_dial),
-                    backgroundColor = bottomPillBgColor,
-                    iconTint = bottomPillIconTint,
+                    backgroundColor = bottomActionBg,
+                    iconTint = if (appTheme.isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
                     testTag = "tool_menu_bottom_speed_dial",
                     modifier = Modifier.weight(1f),
                     onClick = onAddSpeedDial
                 )
 
-                // 3. Dark/Light mode icon pill (half moon for dark, sun for light)
-                BottomActionPill(
-                    icon = if (isDark) Icons.Filled.DarkMode else Icons.Filled.LightMode,
-                    contentDescription = if (isDark) "Switch to Light mode" else "Switch to Dark mode",
-                    backgroundColor = bottomPillBgColor,
-                    iconTint = if (isDark) Color(0xFF90CAF9) else Color(0xFFF59E0B),
+                // 3. Theme Toggle pill (Cycles Light, Dark, AMOLED)
+                val themeIcon = when {
+                    appTheme.isAmoled -> Icons.Filled.Brightness4
+                    appTheme.isDark -> Icons.Filled.DarkMode
+                    else -> Icons.Filled.LightMode
+                }
+                val themeTint = when {
+                    appTheme.isAmoled -> Color(0xFF67E8F9)
+                    appTheme.isDark -> Color(0xFF90CAF9)
+                    else -> Color(0xFFF59E0B)
+                }
+                ModernBottomActionPill(
+                    icon = themeIcon,
+                    contentDescription = "Switch Theme",
+                    backgroundColor = bottomActionBg,
+                    iconTint = themeTint,
                     testTag = "tool_menu_bottom_theme_toggle",
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        val nextMode = if (isDark) ThemeMode.LIGHT else ThemeMode.DARK
+                        val nextMode = when (themeMode) {
+                            ThemeMode.LIGHT -> ThemeMode.DARK
+                            ThemeMode.DARK -> ThemeMode.AMOLED
+                            ThemeMode.AMOLED -> ThemeMode.LIGHT
+                            ThemeMode.SYSTEM -> if (appTheme.isDark) ThemeMode.LIGHT else ThemeMode.DARK
+                        }
                         onThemeModeChange(nextMode)
                     }
                 )
 
-                // 4. Setting icon pill (opens full-screen Settings menu)
-                BottomActionPill(
+                // 4. Settings pill
+                ModernBottomActionPill(
                     icon = Icons.Filled.Settings,
                     contentDescription = stringResource(R.string.tool_settings),
-                    backgroundColor = bottomPillBgColor,
-                    iconTint = bottomPillIconTint,
+                    backgroundColor = bottomActionBg,
+                    iconTint = if (appTheme.isDark) Color(0xFFFBBF24) else Color(0xFFD97706),
                     testTag = "tool_menu_bottom_settings",
                     modifier = Modifier.weight(1f),
                     onClick = onOpenSettings
@@ -357,82 +375,136 @@ fun MenuBottomSheet(
     }
 }
 
+/**
+ * 4-Button Theme Mode Selector Row directly inside the Menu Sheet
+ */
 @Composable
-fun ToolMenuRow(
-    items: List<ToolMenuItem>,
-    pillBgColor: Color,
-    pillIconTint: Color,
-    pillTextColor: Color,
-    onItemClick: (ToolMenuItem) -> Unit
+private fun ThemeModeSelectorRow(
+    currentMode: ThemeMode,
+    onModeSelected: (ThemeMode) -> Unit,
+    isDark: Boolean,
+    isAmoled: Boolean
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    val items = listOf(
+        Triple(ThemeMode.LIGHT, "Light", Icons.Filled.LightMode),
+        Triple(ThemeMode.DARK, "Dark", Icons.Filled.DarkMode),
+        Triple(ThemeMode.AMOLED, "AMOLED", Icons.Filled.Brightness4),
+        Triple(ThemeMode.SYSTEM, "Auto", Icons.Filled.BrightnessAuto)
+    )
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (isAmoled) Color(0xFF101012) else if (isDark) Color(0xFF1E2837) else Color(0xFFF1F5F9),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isAmoled) Color(0xFF27272A) else if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+        ),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        items.forEach { item ->
-            ToolMenuPill(
-                item = item,
-                pillBgColor = pillBgColor,
-                pillIconTint = pillIconTint,
-                pillTextColor = pillTextColor,
-                modifier = Modifier.weight(1f),
-                onClick = { onItemClick(item) }
-            )
-        }
-        repeat((3 - items.size).coerceAtLeast(0)) {
-            Spacer(modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items.forEach { (mode, label, icon) ->
+                val isSelected = currentMode == mode
+                val bg = if (isSelected) {
+                    if (isAmoled) Color(0xFF27272A) else if (isDark) Color(0xFF334155) else Color.White
+                } else {
+                    Color.Transparent
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = bg,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(38.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onModeSelected(mode) }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = label,
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = label,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ToolMenuPill(
+fun ModernToolMenuPill(
     item: ToolMenuItem,
-    pillBgColor: Color,
-    pillIconTint: Color,
-    pillTextColor: Color,
+    backgroundColor: Color,
+    borderColor: Color,
+    textColor: Color,
+    iconTint: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Surface(
         modifier = modifier
-            .height(44.dp)
-            .clip(RoundedCornerShape(22.dp))
+            .height(48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(width = 0.8.dp, color = borderColor, shape = RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .testTag(item.testTag),
-        color = pillBgColor,
-        shape = RoundedCornerShape(22.dp)
+        color = backgroundColor,
+        shape = RoundedCornerShape(14.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Start
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = null,
-                tint = pillIconTint,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(5.dp))
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = iconTint.copy(alpha = 0.12f),
+                modifier = Modifier.size(28.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = item.label,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = pillTextColor,
+                fontWeight = FontWeight.SemiBold,
+                color = textColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Start
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
 @Composable
-fun BottomActionPill(
+fun ModernBottomActionPill(
     icon: ImageVector,
     contentDescription: String,
     backgroundColor: Color,
@@ -443,12 +515,12 @@ fun BottomActionPill(
 ) {
     Surface(
         modifier = modifier
-            .height(50.dp)
-            .clip(RoundedCornerShape(25.dp))
+            .height(48.dp)
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .testTag(testTag),
         color = backgroundColor,
-        shape = RoundedCornerShape(25.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Box(
             modifier = Modifier.fillMaxWidth(),

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.BookmarkScreen
 import com.example.ui.BrowserScreen
 import com.example.ui.BrowserViewModel
 import com.example.ui.DownloadScreen
@@ -45,9 +46,10 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.DARK -> true
                 ThemeMode.LIGHT -> false
+                ThemeMode.AMOLED -> true
             }
 
-            BrowsonTheme(darkTheme = isDarkTheme) {
+            BrowsonTheme(themeMode = uiState.themeMode) {
                 if (uiState.showSettingsScreen) {
                     SettingsScreen(
                         themeMode = uiState.themeMode,
@@ -65,7 +67,11 @@ class MainActivity : ComponentActivity() {
                         onRemoveToolbarTool = { viewModel.removeToolFromToolbar(it) },
                         onAddToolbarTool = { viewModel.addToolToToolbar(it) },
                         onMoveToolbarTool = { from, to -> viewModel.moveToolInToolbar(from, to) },
-                        onResetToolbar = { viewModel.resetToolbar() }
+                        onResetToolbar = { viewModel.resetToolbar() },
+                        onOpenBookmarks = {
+                            viewModel.closeSettingsScreen()
+                            viewModel.openBookmarkScreen()
+                        }
                     )
                 } else if (uiState.showHistoryScreen) {
                     HistoryScreen(
@@ -76,7 +82,19 @@ class MainActivity : ComponentActivity() {
                         onDeleteHistory = { ids ->
                             viewModel.deleteHistory(ids)
                         },
-                        onClose = { viewModel.closeHistoryScreen() }
+                        onClose = { viewModel.closeHistoryScreen() },
+                        onAddToBookmarks = { title, url ->
+                            viewModel.addBookmark(title, url)
+                        },
+                        onAddToSpeedDial = { title, url ->
+                            viewModel.addBookmarkToSpeedDial(
+                                com.example.model.BookmarkItem(
+                                    id = java.util.UUID.randomUUID().toString(),
+                                    title = title,
+                                    url = url
+                                )
+                            )
+                        }
                     )
                 } else if (uiState.showDownloadScreen) {
                     DownloadScreen(
@@ -91,6 +109,25 @@ class MainActivity : ComponentActivity() {
                             viewModel.openSettingsScreen()
                         },
                         onClose = { viewModel.closeDownloadScreen() }
+                    )
+                } else if (uiState.showBookmarkScreen) {
+                    BookmarkScreen(
+                        bookmarks = uiState.bookmarks,
+                        folders = uiState.bookmarkFolders,
+                        selectedFolderId = uiState.selectedBookmarkFolderId,
+                        onSelectFolder = { viewModel.selectBookmarkFolder(it) },
+                        onCreateFolder = { name, color -> viewModel.createBookmarkFolder(name, color) },
+                        onDeleteFolder = { viewModel.deleteBookmarkFolder(it) },
+                        onNavigateToUrl = { url, title -> viewModel.navigateToUrl(url, title) },
+                        onDeleteBookmarks = { viewModel.deleteBookmarks(it) },
+                        onAddToSpeedDial = { viewModel.addBookmarkToSpeedDial(it) },
+                        onAddBookmark = { title, url, fId, fName -> viewModel.addBookmark(title, url, fId, fName) },
+                        onEditBookmark = { item -> viewModel.openEditBookmarkDialog(item) },
+                        onMoveBookmark = { bmId, fId, fName -> viewModel.moveBookmarkToFolder(bmId, fId, fName) },
+                        onImportBookmarks = { data, fId, fName -> viewModel.importBookmarks(data, fId, fName) },
+                        onExportJson = { viewModel.exportBookmarksAsJson() },
+                        onExportHtml = { viewModel.exportBookmarksAsHtml() },
+                        onClose = { viewModel.closeBookmarkScreen() }
                     )
                 } else {
                     Scaffold(
@@ -109,12 +146,13 @@ class MainActivity : ComponentActivity() {
                                 toolbarToolIds = uiState.activeToolbarToolIds,
                                 onHistoryClick = { viewModel.openHistoryScreen() },
                                 onDownloadsClick = { viewModel.openDownloadScreen() },
-                                onBookmarksClick = { viewModel.openAddBookmarkDialog() },
+                                onBookmarksClick = { viewModel.openBookmarkScreen() },
                                 onNewTabClick = { viewModel.addNewTab() },
                                 onDarkModeClick = {
                                     val nextMode = when (uiState.themeMode) {
                                         ThemeMode.LIGHT -> ThemeMode.DARK
-                                        ThemeMode.DARK -> ThemeMode.LIGHT
+                                        ThemeMode.DARK -> ThemeMode.AMOLED
+                                        ThemeMode.AMOLED -> ThemeMode.LIGHT
                                         ThemeMode.SYSTEM -> if (isDarkTheme) ThemeMode.LIGHT else ThemeMode.DARK
                                     }
                                     viewModel.setThemeMode(nextMode)
@@ -154,7 +192,13 @@ class MainActivity : ComponentActivity() {
                                     onAddBookmarkClick = { viewModel.openAddBookmarkDialog() },
                                     onEditBookmark = { item -> viewModel.openEditBookmarkDialog(item) },
                                     onDeleteBookmark = { id -> viewModel.removeBookmark(id) },
-                                    onRemoveBookmark = { id -> viewModel.removeBookmarkFromHomeScreen(id) }
+                                    onRemoveBookmark = { id -> viewModel.removeBookmarkFromHomeScreen(id) },
+                                    recentHistory = uiState.historyItems.take(5),
+                                    onHistoryItemClick = { item -> viewModel.navigateToUrl(item.url, item.title) },
+                                    onOpenBookmarkMenu = { viewModel.openBookmarkScreen() },
+                                    onOpenHistory = { viewModel.openHistoryScreen() },
+                                    onOpenDownloads = { viewModel.openDownloadScreen() },
+                                    onOpenSettings = { viewModel.openSettingsScreen() }
                                 )
                             }
 
@@ -246,6 +290,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenDownloads = {
                                     viewModel.openDownloadScreen()
+                                },
+                                onOpenBookmarks = {
+                                    viewModel.openBookmarkScreen()
                                 },
                                 activeToolIds = uiState.activeToolMenuIds,
                                 currentUrl = uiState.currentUrl,
