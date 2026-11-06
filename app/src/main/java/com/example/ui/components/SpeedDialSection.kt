@@ -66,7 +66,8 @@ fun SpeedDialSection(
     onAddClick: () -> Unit,
     onEditClick: (SpeedDialItem) -> Unit,
     onRemoveClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showAddButton: Boolean = false
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         val appTheme = LocalAppTheme.current
@@ -120,30 +121,32 @@ fun SpeedDialSection(
                 }
             }
 
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(onClick = onAddClick)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            if (showAddButton) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClick = onAddClick)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "Add",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Add",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
@@ -152,7 +155,7 @@ fun SpeedDialSection(
 
         // 5 COLUMNS Grid with Square Round Corner Shape
         val columns = 5
-        val totalCells = items.size + 1
+        val totalCells = if (showAddButton) items.size + 1 else items.size
         val rows = (totalCells + columns - 1) / columns
 
         Column(
@@ -175,7 +178,7 @@ fun SpeedDialSection(
                                 onDelete = { onRemoveClick(item.id) },
                                 modifier = Modifier.weight(1f)
                             )
-                        } else if (index == items.size) {
+                        } else if (showAddButton && index == items.size) {
                             // Plus icon at the last with matching square round corner shape
                             SquareRoundedAddIconItem(
                                 label = "Add",

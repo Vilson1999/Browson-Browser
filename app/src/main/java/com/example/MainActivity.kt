@@ -210,7 +210,19 @@ class MainActivity : ComponentActivity() {
                                     onUrlChange = { newUrl ->
                                         viewModel.updateSearchInput(newUrl)
                                     },
-                                    onClose = { viewModel.goHome() }
+                                    onClose = { viewModel.goHome() },
+                                    onAddToBookmarks = { title, url ->
+                                        viewModel.addBookmark(title, url)
+                                    },
+                                    onAddToSpeedDial = { title, url ->
+                                        viewModel.addBookmarkToSpeedDial(
+                                            com.example.model.BookmarkItem(
+                                                id = java.util.UUID.randomUUID().toString(),
+                                                title = title,
+                                                url = url
+                                            )
+                                        )
+                                    }
                                 )
                             } else {
                                 HomeScreen(
@@ -232,7 +244,7 @@ class MainActivity : ComponentActivity() {
                                     onEditBookmark = { item -> viewModel.openEditBookmarkDialog(item) },
                                     onDeleteBookmark = { id -> viewModel.removeBookmark(id) },
                                     onRemoveBookmark = { id -> viewModel.removeBookmarkFromHomeScreen(id) },
-                                    recentHistory = uiState.historyItems.take(5),
+                                    recentHistory = uiState.historyItems,
                                     onHistoryItemClick = { item -> viewModel.navigateToUrl(item.url, item.title) },
                                     onOpenBookmarkMenu = { viewModel.openBookmarkScreen() },
                                     onOpenHistory = { viewModel.openHistoryScreen() },

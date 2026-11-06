@@ -131,7 +131,6 @@ fun BookmarkScreen(
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedIds = remember { mutableStateListOf<String>() }
 
-    var isGridView by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
 
@@ -509,25 +508,6 @@ fun BookmarkScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Switch between List and Grid
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        IconButton(
-                            onClick = { isGridView = !isGridView },
-                            modifier = Modifier.size(32.dp).testTag("bookmark_toggle_grid")
-                        ) {
-                            Icon(
-                                imageVector = if (isGridView) Icons.AutoMirrored.Filled.ViewList else Icons.Filled.GridView,
-                                contentDescription = if (isGridView) "List View" else "Grid View",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
                     // Multi-select toggle
                     Surface(
                         shape = RoundedCornerShape(10.dp),
@@ -629,94 +609,46 @@ fun BookmarkScreen(
                 }
             } else {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val isTabletOrWide = maxWidth > 600.dp
-
-                    if (isGridView || isTabletOrWide) {
-                        val columns = if (maxWidth > 840.dp) 3 else 2
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(columns),
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("bookmark_grid"),
-                            contentPadding = PaddingValues(14.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            items(filteredBookmarks, key = { it.id }) { item ->
-                                BookmarkCardItem(
-                                    item = item,
-                                    isSelectionMode = isSelectionMode,
-                                    isSelected = selectedIds.contains(item.id),
-                                    onItemClick = {
-                                        if (isSelectionMode) {
-                                            if (selectedIds.contains(item.id)) selectedIds.remove(item.id) else selectedIds.add(item.id)
-                                        } else {
-                                            onNavigateToUrl(item.url, item.title)
-                                            onClose()
-                                        }
-                                    },
-                                    onLongClick = {
-                                        isSelectionMode = true
-                                        if (!selectedIds.contains(item.id)) selectedIds.add(item.id)
-                                    },
-                                    onSendClick = {
-                                        sendBookmark(context, item)
-                                    },
-                                    onAddToSpeedDial = {
-                                        val added = onAddToSpeedDial(item)
-                                        Toast.makeText(
-                                            context,
-                                            if (added) "Added '${item.title}' to Speed Dials" else "Already in Speed Dials",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    },
-                                    onEditClick = { onEditBookmark(item) },
-                                    onDeleteClick = { onDeleteBookmarks(setOf(item.id)) },
-                                    onMoveClick = { bookmarkToMove = item }
-                                )
-                            }
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("bookmark_list"),
-                            contentPadding = PaddingValues(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            items(filteredBookmarks, key = { it.id }) { item ->
-                                BookmarkRowItem(
-                                    item = item,
-                                    isSelectionMode = isSelectionMode,
-                                    isSelected = selectedIds.contains(item.id),
-                                    onItemClick = {
-                                        if (isSelectionMode) {
-                                            if (selectedIds.contains(item.id)) selectedIds.remove(item.id) else selectedIds.add(item.id)
-                                        } else {
-                                            onNavigateToUrl(item.url, item.title)
-                                            onClose()
-                                        }
-                                    },
-                                    onLongClick = {
-                                        isSelectionMode = true
-                                        if (!selectedIds.contains(item.id)) selectedIds.add(item.id)
-                                    },
-                                    onSendClick = {
-                                        sendBookmark(context, item)
-                                    },
-                                    onAddToSpeedDial = {
-                                        val added = onAddToSpeedDial(item)
-                                        Toast.makeText(
-                                            context,
-                                            if (added) "Added '${item.title}' to Speed Dials" else "Already in Speed Dials",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    },
-                                    onEditClick = { onEditBookmark(item) },
-                                    onDeleteClick = { onDeleteBookmarks(setOf(item.id)) },
-                                    onMoveClick = { bookmarkToMove = item }
-                                )
-                            }
+                    // Always show as List View
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("bookmark_list"),
+                        contentPadding = PaddingValues(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(filteredBookmarks, key = { it.id }) { item ->
+                            BookmarkRowItem(
+                                item = item,
+                                isSelectionMode = isSelectionMode,
+                                isSelected = selectedIds.contains(item.id),
+                                onItemClick = {
+                                    if (isSelectionMode) {
+                                        if (selectedIds.contains(item.id)) selectedIds.remove(item.id) else selectedIds.add(item.id)
+                                    } else {
+                                        onNavigateToUrl(item.url, item.title)
+                                        onClose()
+                                    }
+                                },
+                                onLongClick = {
+                                    isSelectionMode = true
+                                    if (!selectedIds.contains(item.id)) selectedIds.add(item.id)
+                                },
+                                onSendClick = {
+                                    sendBookmark(context, item)
+                                },
+                                onAddToSpeedDial = {
+                                    val added = onAddToSpeedDial(item)
+                                    Toast.makeText(
+                                        context,
+                                        if (added) "Added '${item.title}' to Speed Dials" else "Already in Speed Dials",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                                onEditClick = { onEditBookmark(item) },
+                                onDeleteClick = { onDeleteBookmarks(setOf(item.id)) },
+                                onMoveClick = { bookmarkToMove = item }
+                            )
                         }
                     }
                 }

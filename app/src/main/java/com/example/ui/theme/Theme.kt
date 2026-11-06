@@ -283,10 +283,10 @@ fun BrowsonTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                // Notification bar (status bar) colour same as app topbar colour
-                window.statusBarColor = effectiveTopBarBg.toArgb()
-                // Navigation bar colour same as bottom toolbar colour
-                window.navigationBarColor = effectiveToolbarBg.toArgb()
+                // Status bar colour matches app searchbar colour
+                window.statusBarColor = appThemeColors.searchBarBg.toArgb()
+                // Navigation bar colour matches bottom toolbar colour
+                window.navigationBarColor = appThemeColors.toolbarBg.toArgb()
                 val insetsController = WindowCompat.getInsetsController(window, view)
                 val lightThemeContent = !isDark && resolvedGradient == null
                 insetsController.isAppearanceLightStatusBars = lightThemeContent

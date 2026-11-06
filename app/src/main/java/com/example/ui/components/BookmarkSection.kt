@@ -66,7 +66,8 @@ fun BookmarkSection(
     onEditClick: (BookmarkItem) -> Unit,
     onDeleteClick: (String) -> Unit,
     onRemoveClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showAddButton: Boolean = false
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         val appTheme = LocalAppTheme.current
@@ -120,30 +121,32 @@ fun BookmarkSection(
                 }
             }
 
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(onClick = onAddClick)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            if (showAddButton) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClick = onAddClick)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "Add",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Add",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
                 }
             }
         }
@@ -152,7 +155,7 @@ fun BookmarkSection(
 
         // 5 COLUMNS Grid of Bookmarks with plus icon at the end
         val columns = 5
-        val totalCells = items.size + 1
+        val totalCells = if (showAddButton) items.size + 1 else items.size
         val rows = (totalCells + columns - 1) / columns
 
         Column(
@@ -176,7 +179,7 @@ fun BookmarkSection(
                                 onRemove = { onRemoveClick(item.id) },
                                 modifier = Modifier.weight(1f)
                             )
-                        } else if (index == items.size) {
+                        } else if (showAddButton && index == items.size) {
                             // Plus icon at the last with matching 5-column square round shape
                             AddBookmarkIconItem(
                                 label = "Add",

@@ -39,10 +39,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Close
@@ -50,7 +48,6 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.OpenInBrowser
@@ -129,7 +126,6 @@ fun HistoryScreen(
     var isSearching by remember { mutableStateOf(false) }
     var selectedTimeFilter by remember { mutableStateOf(HistoryTimeFilter.ALL) }
     var selectedDomainFilter by remember { mutableStateOf<String?>(null) }
-    var isGridView by remember { mutableStateOf(false) }
 
     var showClearRangeDialog by remember { mutableStateOf(false) }
 
@@ -447,25 +443,6 @@ fun HistoryScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Grid / List toggle
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        IconButton(
-                            onClick = { isGridView = !isGridView },
-                            modifier = Modifier.size(32.dp).testTag("history_toggle_grid")
-                        ) {
-                            Icon(
-                                imageVector = if (isGridView) Icons.AutoMirrored.Filled.ViewList else Icons.Filled.GridView,
-                                contentDescription = if (isGridView) "List View" else "Grid View",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-
                     // Selection mode toggle
                     Surface(
                         shape = RoundedCornerShape(10.dp),
@@ -560,70 +537,18 @@ fun HistoryScreen(
                 }
             } else {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val isTablet = maxWidth > 600.dp
+                    // Sectioned List View grouped by Date (always list)
+                    val grouped = remember(filteredItems) {
+                        filteredItems.groupBy { getHistoryTimeGroup(it.timestamp) }
+                    }
 
-                    if (isGridView || isTablet) {
-                        val columns = if (maxWidth > 840.dp) 3 else 2
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(columns),
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("history_list"),
-                            contentPadding = PaddingValues(14.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            items(filteredItems, key = { it.id }) { item ->
-                                HistoryCardItem(
-                                    item = item,
-                                    isSelectionMode = isSelectionMode,
-                                    isSelected = selectedIds.contains(item.id),
-                                    onItemClick = {
-                                        if (isSelectionMode) {
-                                            if (selectedIds.contains(item.id)) selectedIds.remove(item.id) else selectedIds.add(item.id)
-                                        } else {
-                                            onNavigateToUrl(item.url, item.title)
-                                            onClose()
-                                        }
-                                    },
-                                    onLongClick = {
-                                        isSelectionMode = true
-                                        if (!selectedIds.contains(item.id)) selectedIds.add(item.id)
-                                    },
-                                    onDeleteClick = {
-                                        onDeleteHistory(setOf(item.id))
-                                        Toast.makeText(context, "Removed from history", Toast.LENGTH_SHORT).show()
-                                    },
-                                    onShareClick = {
-                                        shareHistoryUrl(context, item.title, item.url)
-                                    },
-                                    onCopyLinkClick = {
-                                        copyUrlToClipboard(context, item.url)
-                                    },
-                                    onBookmarkClick = {
-                                        onAddToBookmarks?.invoke(item.title, item.url)
-                                        Toast.makeText(context, "Saved to Bookmarks", Toast.LENGTH_SHORT).show()
-                                    },
-                                    onSpeedDialClick = {
-                                        onAddToSpeedDial?.invoke(item.title, item.url)
-                                        Toast.makeText(context, "Added to Speed Dials", Toast.LENGTH_SHORT).show()
-                                    }
-                                )
-                            }
-                        }
-                    } else {
-                        // Sectioned List View grouped by Date
-                        val grouped = remember(filteredItems) {
-                            filteredItems.groupBy { getHistoryTimeGroup(it.timestamp) }
-                        }
-
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("history_list"),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("history_list"),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                             grouped.forEach { (timeGroup, itemsInGroup) ->
                                 // Section Sticky Header
                                 item(key = "header_${timeGroup.name}") {
@@ -735,7 +660,6 @@ fun HistoryScreen(
                 }
             }
         }
-    }
 
     // ==========================================
     // CLEAR BROWSING DATA RANGE DIALOG

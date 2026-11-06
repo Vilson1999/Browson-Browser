@@ -26,10 +26,10 @@ val DarkOnSurface = Color(0xFFF1F3F5)
 val DarkOnSurfaceVariant = Color(0xFFA0A5B5)
 val DarkOutline = Color(0xFF262C3A)
 
-// --- PURE LIGHT PALETTE (White background, subtly shaded cards) ---
-val LightBackground = Color(0xFFFFFFFF)
+// --- PURE LIGHT PALETTE (Clean, bright, modern light) ---
+val LightBackground = Color(0xFFF8FAFC)
 val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceVariant = Color(0xFFF0F2F5)
+val LightSurfaceVariant = Color(0xFFF1F5F9)
 val LightOnSurface = Color(0xFF0F172A)
 val LightOnSurfaceVariant = Color(0xFF334155)
 val LightOutline = Color(0xFFE2E8F0)
@@ -45,15 +45,16 @@ val AmoledPrimary = Color(0xFFFF334B)
 val AmoledSecondary = Color(0xFF00E676)
 
 // --- Component-specific theme colors ---
-val SearchBarBgLight = Color(0xFFF0F2F5)
-val SearchBarBgDark = Color(0xFF1E2330)
-val SearchBarBgAmoled = Color(0xFF101010)
+// 80% white in light mode (0.80 * 255 = 204 -> 0xCC) and 90% black in dark/amoled mode
+val SearchBarBgLight = Color(0xCCFFFFFF)
+val SearchBarBgDark = Color(0xE6000000)
+val SearchBarBgAmoled = Color(0xE6000000)
 
 val SearchBarOutlineLight = Color(0xFFE2E8F0)
 val SearchBarOutlineDark = Color(0xFF2C3342)
 val SearchBarOutlineAmoled = Color(0xFF27272A)
 
-val SectionCardBgLight = Color(0xFFF0F2F5)
+val SectionCardBgLight = Color(0xFFFFFFFF)
 val SectionCardBgDark = Color(0xFF161922)
 val SectionCardBgAmoled = Color(0xFF090909)
 
@@ -61,11 +62,11 @@ val SectionCardOutlineLight = Color(0xFFE2E8F0)
 val SectionCardOutlineDark = Color(0xFF262C3A)
 val SectionCardOutlineAmoled = Color(0xFF1F1F23)
 
-val SectionIconBgLight = Color(0xFFE2E8F0)
+val SectionIconBgLight = Color(0xFFF8FAFC)
 val SectionIconBgDark = Color(0xFF242938)
 val SectionIconBgAmoled = Color(0xFF161618)
 
-val SectionIconOutlineLight = Color(0xFFCBD5E1)
+val SectionIconOutlineLight = Color(0xFFE2E8F0)
 val SectionIconOutlineDark = Color(0xFF333B4E)
 val SectionIconOutlineAmoled = Color(0xFF27272A)
 

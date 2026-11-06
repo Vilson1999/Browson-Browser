@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Brightness4
-import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
@@ -187,15 +186,7 @@ fun MenuBottomSheet(
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Theme Mode Selector Bar (Light, Dark, AMOLED, System)
-            ThemeModeSelectorRow(
-                currentMode = themeMode,
-                onModeSelected = onThemeModeChange,
-                isDark = appTheme.isDark,
-                isAmoled = appTheme.isAmoled
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
+            // 3 Columns Grid of Active Tools
 
             // 3 Columns Grid of Active Tools
             Column(
@@ -331,23 +322,25 @@ fun MenuBottomSheet(
                     onClick = onAddSpeedDial
                 )
 
-                // 3. Theme Toggle pill (Cycles Light, Dark, AMOLED)
-                val themeIcon = when {
-                    appTheme.isAmoled -> Icons.Filled.Brightness4
-                    appTheme.isDark -> Icons.Filled.DarkMode
-                    else -> Icons.Filled.LightMode
+                // 3. Theme Icon (only icon, left side of Settings)
+                val themeIcon = when (themeMode) {
+                    ThemeMode.AMOLED -> Icons.Filled.Brightness4
+                    ThemeMode.DARK -> Icons.Filled.DarkMode
+                    ThemeMode.LIGHT -> Icons.Filled.LightMode
+                    ThemeMode.SYSTEM -> if (appTheme.isDark) Icons.Filled.DarkMode else Icons.Filled.LightMode
                 }
-                val themeTint = when {
-                    appTheme.isAmoled -> Color(0xFF67E8F9)
-                    appTheme.isDark -> Color(0xFF90CAF9)
-                    else -> Color(0xFFF59E0B)
+                val themeTint = when (themeMode) {
+                    ThemeMode.AMOLED -> Color(0xFF67E8F9)
+                    ThemeMode.DARK -> Color(0xFF90CAF9)
+                    ThemeMode.LIGHT -> Color(0xFFF59E0B)
+                    ThemeMode.SYSTEM -> if (appTheme.isDark) Color(0xFF90CAF9) else Color(0xFFF59E0B)
                 }
                 ModernBottomActionPill(
                     icon = themeIcon,
-                    contentDescription = "Switch Theme",
+                    contentDescription = "Switch Theme (Light, Dark, AMOLED)",
                     backgroundColor = bottomActionBg,
                     iconTint = themeTint,
-                    testTag = "tool_menu_bottom_theme_toggle",
+                    testTag = "tool_menu_bottom_theme_icon",
                     modifier = Modifier.weight(1f),
                     onClick = {
                         val nextMode = when (themeMode) {
@@ -370,80 +363,6 @@ fun MenuBottomSheet(
                     modifier = Modifier.weight(1f),
                     onClick = onOpenSettings
                 )
-            }
-        }
-    }
-}
-
-/**
- * 4-Button Theme Mode Selector Row directly inside the Menu Sheet
- */
-@Composable
-private fun ThemeModeSelectorRow(
-    currentMode: ThemeMode,
-    onModeSelected: (ThemeMode) -> Unit,
-    isDark: Boolean,
-    isAmoled: Boolean
-) {
-    val items = listOf(
-        Triple(ThemeMode.LIGHT, "Light", Icons.Filled.LightMode),
-        Triple(ThemeMode.DARK, "Dark", Icons.Filled.DarkMode),
-        Triple(ThemeMode.AMOLED, "AMOLED", Icons.Filled.Brightness4),
-        Triple(ThemeMode.SYSTEM, "Auto", Icons.Filled.BrightnessAuto)
-    )
-
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (isAmoled) Color(0xFF101012) else if (isDark) Color(0xFF1E2837) else Color(0xFFF1F5F9),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (isAmoled) Color(0xFF27272A) else if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items.forEach { (mode, label, icon) ->
-                val isSelected = currentMode == mode
-                val bg = if (isSelected) {
-                    if (isAmoled) Color(0xFF27272A) else if (isDark) Color(0xFF334155) else Color.White
-                } else {
-                    Color.Transparent
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = bg,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(38.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onModeSelected(mode) }
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = label,
-                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = label,
-                            fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
         }
     }
