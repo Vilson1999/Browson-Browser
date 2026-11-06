@@ -119,158 +119,18 @@ fun HomeScreen(
         ?: com.example.ui.theme.WallpaperStylePresets.first()
     val wallpaperColors = if (isDarkWallpaper) wallpaperPreset.darkColors else wallpaperPreset.lightColors
 
-    val homeBackgroundBrush = appTheme.uiGradientBrush ?: Brush.verticalGradient(wallpaperColors)
-    var selectedCategoryFilter by remember { mutableStateOf("All") }
+    val isLightMode = !appTheme.isDark && !appTheme.isAmoled
+    val homeBgModifier = when {
+        appTheme.uiGradientBrush != null -> Modifier.background(appTheme.uiGradientBrush!!)
+        isLightMode -> Modifier.background(Color.White)
+        else -> Modifier.background(Brush.verticalGradient(wallpaperColors))
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(homeBackgroundBrush)
+            .then(homeBgModifier)
     ) {
-        // TOP APP BAR - Matching BookmarkScreen & HistoryScreen design language
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = appTheme.topBarBg,
-            tonalElevation = 2.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Left: Logo in circular badge + "Browson" + "Vilson Sonkar"
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_browson_logo_with_blue_center),
-                                    contentDescription = "Browson",
-                                    modifier = Modifier.size(26.dp).clip(CircleShape)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        Column {
-                            Text(
-                                text = "Browson",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                color = appTheme.onSurface
-                            )
-                            Text(
-                                text = "Vilson Sonkar",
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 10.sp,
-                                color = appTheme.primary
-                            )
-                        }
-                    }
-
-                    // Right: Circular action buttons for Bookmarks, History, Downloads, Settings
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            IconButton(onClick = onOpenBookmarkMenu) {
-                                Icon(Icons.Filled.Bookmark, contentDescription = "Bookmarks", tint = appTheme.onSurface, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            IconButton(onClick = onOpenHistory) {
-                                Icon(Icons.Filled.History, contentDescription = "History", tint = appTheme.onSurface, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            IconButton(onClick = onOpenDownloads) {
-                                Icon(Icons.Filled.Download, contentDescription = "Downloads", tint = appTheme.onSurface, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            IconButton(onClick = onOpenSettings) {
-                                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = appTheme.onSurface, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                    }
-                }
-
-                // Filter chips row matching BookmarkScreen & HistoryScreen
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    listOf(
-                        Triple("All", Icons.Filled.Explore, speedDials.size + bookmarks.size),
-                        Triple("Speed Dials", Icons.Filled.Speed, speedDials.size),
-                        Triple("Bookmarks", Icons.Filled.Bookmark, bookmarks.size),
-                        Triple("Recent History", Icons.Filled.History, recentHistory.size)
-                    ).forEach { (label, icon, count) ->
-                        val isSelected = selectedCategoryFilter == label
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedCategoryFilter = label },
-                            label = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(label, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
-                                    if (count > 0) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "$count",
-                                            fontSize = 10.sp,
-                                            color = if (isSelected) appTheme.primary else appTheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            },
-                            leadingIcon = {
-                                Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp))
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = appTheme.primary.copy(alpha = 0.15f),
-                                selectedLabelColor = appTheme.primary,
-                                selectedLeadingIconColor = appTheme.primary
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
         // Responsive container for Mobile & Tablet (Tab)
         BoxWithConstraints(
             modifier = Modifier
@@ -285,51 +145,25 @@ fun HomeScreen(
                 modifier = Modifier
                     .widthIn(max = contentMaxWidth)
                     .fillMaxSize()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp)
                     .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-            // 2. TOP PILL ADDRESS BAR WITH MIC & QR
-            TopAddressBar(
-                query = searchQuery,
-                onQueryChange = onSearchQueryChange,
-                onSubmit = onSearchSubmit,
-                modifier = Modifier.testTag("home_top_address_bar")
-            )
+                // TOP PILL ADDRESS BAR WITH MIC & QR
+                TopAddressBar(
+                    query = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    onSubmit = onSearchSubmit,
+                    modifier = Modifier.testTag("home_top_address_bar")
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // 3. SEARCH ENGINE SHORTCUTS (Google, YouTube, Reddit, Wikipedia, GitHub)
-            SearchEnginePills(
-                onEngineSelected = { urlPrefix ->
-                    if (searchQuery.isNotBlank()) {
-                        onSearchSubmit(searchQuery)
-                    } else {
-                        onSearchSubmit(urlPrefix)
-                    }
-                },
-                appTheme = appTheme
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // 4. QUICK NAVIGATION HUB (Bookmarks, History, Downloads, Settings)
-            HomeQuickHub(
-                bookmarksCount = bookmarks.size,
-                historyCount = recentHistory.size,
-                onOpenBookmarks = onOpenBookmarkMenu,
-                onOpenHistory = onOpenHistory,
-                onOpenDownloads = onOpenDownloads,
-                onOpenSettings = onOpenSettings,
-                appTheme = appTheme
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 5. SPEED DIALS CARD (Modernized squircle grid with add button)
-            Card(
+                // SPEED DIALS CARD (Modernized squircle grid with add button)
+                Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(
@@ -395,19 +229,6 @@ fun HomeScreen(
                         onRemoveClick = onRemoveBookmark
                     )
                 }
-            }
-
-            // 7. JUMP BACK IN / RECENT ACTIVITY SECTION (If user has browsing history)
-            if (recentHistory.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(14.dp))
-                RecentActivityCard(
-                    recentHistory = recentHistory,
-                    onItemClick = onHistoryItemClick,
-                    onViewAllClick = onOpenHistory,
-                    cardBg = sectionCardBg,
-                    cardBorder = sectionCardBorder,
-                    appTheme = appTheme
-                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

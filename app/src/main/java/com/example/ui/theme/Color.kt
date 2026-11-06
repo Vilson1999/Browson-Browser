@@ -9,12 +9,14 @@ val BrowsonGreen = Color(0xFF10B981)
 val BrowsonGreenDark = Color(0xFF047857)
 val BrowsonWhite = Color(0xFFFFFFFF)
 
-// --- 80% OF WHITE BASE PALETTE (Strict rule: No pure white 0xFFFFFFFF for backgrounds) ---
-// 80% white: RGB (204, 204, 204) = 0xFFCCCCCC
-val EightyPercentWhite = Color(0xFFCCCCCC)
-val EightyPercentWhiteSurface = Color(0xFFD5D8DF)
-val EightyPercentWhiteCard = Color(0xFFDCDEE5)
-val EightyPercentWhiteOutline = Color(0xFFB8BCC6)
+// --- 95% OF WHITE BASE PALETTE (255 * 0.95 = 242.25 -> 0xFFF2F2F2) ---
+val NinetyFivePercentWhite = Color(0xFFF2F2F2)
+val NinetyFivePercentWhiteSurface = Color(0xFFE6E8EC)
+val NinetyFivePercentWhiteCard = Color(0xFFEAECEF)
+val NinetyFivePercentWhiteOutline = Color(0xFFD0D4DC)
+
+// Backward compatibility alias for sheets and presets
+val EightyPercentWhite = NinetyFivePercentWhite
 
 // --- PURE DARK PALETTE (Slate/Navy Dark) ---
 val DarkBackground = Color(0xFF0F1117)
@@ -24,13 +26,13 @@ val DarkOnSurface = Color(0xFFF1F3F5)
 val DarkOnSurfaceVariant = Color(0xFFA0A5B5)
 val DarkOutline = Color(0xFF262C3A)
 
-// --- PURE LIGHT PALETTE (80% of White background, never pure white) ---
-val LightBackground = EightyPercentWhite
-val LightSurface = EightyPercentWhiteSurface
-val LightSurfaceVariant = EightyPercentWhiteCard
+// --- PURE LIGHT PALETTE (White background, subtly shaded cards) ---
+val LightBackground = Color(0xFFFFFFFF)
+val LightSurface = Color(0xFFFFFFFF)
+val LightSurfaceVariant = Color(0xFFF0F2F5)
 val LightOnSurface = Color(0xFF0F172A)
 val LightOnSurfaceVariant = Color(0xFF334155)
-val LightOutline = EightyPercentWhiteOutline
+val LightOutline = Color(0xFFE2E8F0)
 
 // --- AMOLED PALETTE (Pitch Black 0x000000 for True OLED) ---
 val AmoledBackground = Color(0xFF000000)
@@ -43,35 +45,35 @@ val AmoledPrimary = Color(0xFFFF334B)
 val AmoledSecondary = Color(0xFF00E676)
 
 // --- Component-specific theme colors ---
-val SearchBarBgLight = EightyPercentWhiteCard
+val SearchBarBgLight = Color(0xFFF0F2F5)
 val SearchBarBgDark = Color(0xFF1E2330)
 val SearchBarBgAmoled = Color(0xFF101010)
 
-val SearchBarOutlineLight = EightyPercentWhiteOutline
+val SearchBarOutlineLight = Color(0xFFE2E8F0)
 val SearchBarOutlineDark = Color(0xFF2C3342)
 val SearchBarOutlineAmoled = Color(0xFF27272A)
 
-val SectionCardBgLight = EightyPercentWhiteCard
+val SectionCardBgLight = Color(0xFFF0F2F5)
 val SectionCardBgDark = Color(0xFF161922)
 val SectionCardBgAmoled = Color(0xFF090909)
 
-val SectionCardOutlineLight = EightyPercentWhiteOutline
+val SectionCardOutlineLight = Color(0xFFE2E8F0)
 val SectionCardOutlineDark = Color(0xFF262C3A)
 val SectionCardOutlineAmoled = Color(0xFF1F1F23)
 
-val SectionIconBgLight = Color(0xFFC0C5CF)
+val SectionIconBgLight = Color(0xFFE2E8F0)
 val SectionIconBgDark = Color(0xFF242938)
 val SectionIconBgAmoled = Color(0xFF161618)
 
-val SectionIconOutlineLight = EightyPercentWhiteOutline
+val SectionIconOutlineLight = Color(0xFFCBD5E1)
 val SectionIconOutlineDark = Color(0xFF333B4E)
 val SectionIconOutlineAmoled = Color(0xFF27272A)
 
-val SpeedDialAddBgLight = Color(0xFFE5B8B8)
+val SpeedDialAddBgLight = Color(0xFFFEE2E2)
 val SpeedDialAddBgDark = Color(0xFF2D1E22)
 val SpeedDialAddBgAmoled = Color(0xFF260D10)
 
-val BookmarkAddBgLight = Color(0xFFB5DEBF)
+val BookmarkAddBgLight = Color(0xFFD1FAE5)
 val BookmarkAddBgDark = Color(0xFF1B2D24)
 val BookmarkAddBgAmoled = Color(0xFF082215)
 
@@ -163,25 +165,25 @@ val WallpaperStylePresets = listOf(
     WallpaperStylePreset(
         id = "mesh_prism",
         name = "Prism Glow",
-        lightColors = listOf(Color(0xFFE2E8F0), Color(0xFFD1D8E2), EightyPercentWhite),
+        lightColors = listOf(Color(0xFFE2E8F0), Color(0xFFD1D8E2), NinetyFivePercentWhite),
         darkColors = listOf(Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF020617))
     ),
     WallpaperStylePreset(
         id = "aurora_flow",
         name = "Aurora Flow",
-        lightColors = listOf(Color(0xFFCFE8E0), Color(0xFFCAD7E5), EightyPercentWhite),
+        lightColors = listOf(Color(0xFFCFE8E0), Color(0xFFCAD7E5), NinetyFivePercentWhite),
         darkColors = listOf(Color(0xFF064E3B), Color(0xFF0F172A), Color(0xFF020617))
     ),
     WallpaperStylePreset(
         id = "sunset_horizon",
         name = "Horizon Glow",
-        lightColors = listOf(Color(0xFFFFDFE2), Color(0xFFE2E4EC), EightyPercentWhite),
+        lightColors = listOf(Color(0xFFFFDFE2), Color(0xFFE2E4EC), NinetyFivePercentWhite),
         darkColors = listOf(Color(0xFF4C0519), Color(0xFF18181B), Color(0xFF09090B))
     ),
     WallpaperStylePreset(
         id = "cosmic_nebula",
         name = "Cosmic Nebula",
-        lightColors = listOf(Color(0xFFDFE6FD), Color(0xFFECE6FD), EightyPercentWhite),
+        lightColors = listOf(Color(0xFFDFE6FD), Color(0xFFECE6FD), NinetyFivePercentWhite),
         darkColors = listOf(Color(0xFF1E1B4B), Color(0xFF311042), Color(0xFF0F0F1A))
     )
 )

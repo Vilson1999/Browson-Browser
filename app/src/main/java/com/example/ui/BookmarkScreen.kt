@@ -56,11 +56,15 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -127,7 +131,7 @@ fun BookmarkScreen(
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedIds = remember { mutableStateListOf<String>() }
 
-    var isGridView by remember { mutableStateOf(false) }
+    var isGridView by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
 
@@ -136,6 +140,7 @@ fun BookmarkScreen(
     var showExportDialog by remember { mutableStateOf(false) }
     var showClearConfirmDialog by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var showTopOverflowMenu by remember { mutableStateOf(false) }
     var bookmarkToMove by remember { mutableStateOf<BookmarkItem?>(null) }
 
     // Intercept back key
@@ -308,31 +313,81 @@ fun BookmarkScreen(
                                 testTag = "bookmark_search_btn"
                             )
 
-                            // Import action
+                            // Create folder button
                             ActionButtonWithBg(
-                                icon = Icons.Filled.FileDownload,
-                                contentDescription = stringResource(R.string.bookmark_import),
-                                onClick = { showImportDialog = true },
-                                testTag = "bookmark_import_btn"
+                                icon = Icons.Filled.CreateNewFolder,
+                                contentDescription = stringResource(R.string.bookmark_create_folder),
+                                iconTint = MaterialTheme.colorScheme.secondary,
+                                bgColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                                onClick = { showCreateFolderDialog = true },
+                                testTag = "bookmark_top_create_folder_btn"
                             )
 
-                            // Export action
-                            ActionButtonWithBg(
-                                icon = Icons.Filled.FileUpload,
-                                contentDescription = stringResource(R.string.bookmark_export),
-                                onClick = { showExportDialog = true },
-                                testTag = "bookmark_export_btn"
-                            )
+                            // Top right 3-dot overflow menu
+                            Box {
+                                ActionButtonWithBg(
+                                    icon = Icons.Filled.MoreVert,
+                                    contentDescription = "Bookmark Options",
+                                    onClick = { showTopOverflowMenu = true },
+                                    testTag = "bookmark_top_overflow_menu"
+                                )
 
-                            // Add bookmark (+)
-                            ActionButtonWithBg(
-                                icon = Icons.Filled.Add,
-                                contentDescription = stringResource(R.string.add_bookmark),
-                                iconTint = MaterialTheme.colorScheme.onPrimary,
-                                bgColor = MaterialTheme.colorScheme.primary,
-                                onClick = { showAddDialog = true },
-                                testTag = "bookmark_add_btn"
-                            )
+                                DropdownMenu(
+                                    expanded = showTopOverflowMenu,
+                                    onDismissRequest = { showTopOverflowMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.bookmark_create_folder)) },
+                                        leadingIcon = {
+                                            Icon(Icons.Filled.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        },
+                                        onClick = {
+                                            showTopOverflowMenu = false
+                                            showCreateFolderDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.add_bookmark)) },
+                                        leadingIcon = {
+                                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        },
+                                        onClick = {
+                                            showTopOverflowMenu = false
+                                            showAddDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.bookmark_import)) },
+                                        leadingIcon = {
+                                            Icon(Icons.Filled.FileDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        },
+                                        onClick = {
+                                            showTopOverflowMenu = false
+                                            showImportDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("${stringResource(R.string.bookmark_export)} (JSON)") },
+                                        leadingIcon = {
+                                            Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        },
+                                        onClick = {
+                                            showTopOverflowMenu = false
+                                            showExportDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Clear All Bookmarks", color = MaterialTheme.colorScheme.error) },
+                                        leadingIcon = {
+                                            Icon(Icons.Filled.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                        },
+                                        onClick = {
+                                            showTopOverflowMenu = false
+                                            showClearConfirmDialog = true
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -798,7 +853,7 @@ fun ActionButtonWithBg(
 }
 
 // ==========================================
-// BOOKMARK ROW ITEM (Compact List View)
+// BOOKMARK ROW ITEM (Compact List View with Poster, Icon & 3-Dot Menu)
 // ==========================================
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -815,7 +870,8 @@ fun BookmarkRowItem(
     onMoveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var showItemMenu by remember { mutableStateOf(false) }
 
     Surface(
         modifier = modifier
@@ -838,10 +894,9 @@ fun BookmarkRowItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Selection checkbox or Website Icon / Thumbnail
             if (isSelectionMode) {
                 Checkbox(
                     checked = isSelected,
@@ -850,10 +905,58 @@ fun BookmarkRowItem(
                     modifier = Modifier.padding(end = 6.dp)
                 )
             } else {
-                WebsiteFaviconBadge(
-                    item = item,
-                    size = 46.dp
-                )
+                // Website Poster Thumbnail with overlaid Favicon Badge
+                Box(
+                    modifier = Modifier
+                        .size(width = 72.dp, height = 56.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(item.colorHex).copy(alpha = 0.2f))
+                ) {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(item.displayPosterUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "${item.title} Poster",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(Color(item.colorHex).copy(alpha = 0.6f), Color(item.colorHex).copy(alpha = 0.25f))
+                                        )
+                                    )
+                            )
+                        },
+                        error = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(Color(item.colorHex).copy(alpha = 0.6f), Color(item.colorHex).copy(alpha = 0.25f))
+                                        )
+                                    )
+                            )
+                        }
+                    )
+
+                    // Overlaid Website Favicon Badge
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp)
+                    ) {
+                        WebsiteFaviconBadge(
+                            item = item,
+                            size = 24.dp
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.width(12.dp))
             }
 
@@ -861,7 +964,7 @@ fun BookmarkRowItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 6.dp)
+                    .padding(end = 4.dp)
             ) {
                 Text(
                     text = item.title,
@@ -879,12 +982,11 @@ fun BookmarkRowItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                // Folder pill
+                Spacer(modifier = Modifier.height(3.dp))
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(6.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp))
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -894,7 +996,7 @@ fun BookmarkRowItem(
                             imageVector = Icons.Filled.Folder,
                             contentDescription = null,
                             tint = Color(item.colorHex),
-                            modifier = Modifier.size(11.dp)
+                            modifier = Modifier.size(10.dp)
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(
@@ -907,53 +1009,65 @@ fun BookmarkRowItem(
                 }
             }
 
-            // New Design Action Buttons with Icon Backgrounds
+            // 3-Dot Button with (Send, Add to Home, Delete, Edit) Menu
             if (!isSelectionMode) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // 1. Send Bookmark
-                    ActionButtonWithBg(
-                        icon = Icons.Filled.Share,
-                        contentDescription = "Send Bookmark",
-                        bgColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                        iconTint = MaterialTheme.colorScheme.primary,
-                        onClick = onSendClick,
-                        testTag = "send_bookmark_${item.id}"
-                    )
-
-                    // 2. Add to Speed Dial
-                    ActionButtonWithBg(
-                        icon = Icons.Filled.Speed,
-                        contentDescription = "Add to Speed Dial",
-                        bgColor = Color(0xFFFEF3C7),
-                        iconTint = Color(0xFFD97706),
-                        onClick = onAddToSpeedDial,
-                        testTag = "speeddial_bookmark_${item.id}"
-                    )
-
-                    // 3. Move / More menu
-                    Box {
-                        ActionButtonWithBg(
-                            icon = Icons.AutoMirrored.Filled.DriveFileMove,
-                            contentDescription = "Move Folder",
-                            bgColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            onClick = onMoveClick,
-                            testTag = "move_bookmark_${item.id}"
+                Box {
+                    IconButton(
+                        onClick = { showItemMenu = true },
+                        modifier = Modifier.testTag("bookmark_row_menu_${item.id}")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Bookmark Options",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
-                    // 4. Delete
-                    ActionButtonWithBg(
-                        icon = Icons.Filled.DeleteOutline,
-                        contentDescription = "Delete",
-                        bgColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                        iconTint = MaterialTheme.colorScheme.error,
-                        onClick = onDeleteClick,
-                        testTag = "delete_bookmark_${item.id}"
-                    )
+                    DropdownMenu(
+                        expanded = showItemMenu,
+                        onDismissRequest = { showItemMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Send") },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            onClick = {
+                                showItemMenu = false
+                                onSendClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Add to Home") },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Home, contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            onClick = {
+                                showItemMenu = false
+                                onAddToSpeedDial()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Edit") },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            onClick = {
+                                showItemMenu = false
+                                onEditClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                            },
+                            onClick = {
+                                showItemMenu = false
+                                onDeleteClick()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -961,7 +1075,7 @@ fun BookmarkRowItem(
 }
 
 // ==========================================
-// BOOKMARK CARD ITEM (Rich Grid / Tablet View)
+// BOOKMARK CARD ITEM (Rich Grid / Poster View with 3-Dot Menu)
 // ==========================================
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -978,6 +1092,9 @@ fun BookmarkCardItem(
     onMoveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    var showItemMenu by remember { mutableStateOf(false) }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -996,111 +1113,198 @@ fun BookmarkCardItem(
         shape = RoundedCornerShape(18.dp),
         tonalElevation = if (isSelected) 4.dp else 2.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp)
-        ) {
-            // Header: Icon + Selection / Folder
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // 1. Website Poster Banner Header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(115.dp)
+                    .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                    .background(Color(item.colorHex).copy(alpha = 0.15f))
             ) {
-                WebsiteFaviconBadge(item = item, size = 48.dp)
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(item.displayPosterUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "${item.title} Poster",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                    loading = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color(item.colorHex).copy(alpha = 0.7f),
+                                            Color(item.colorHex).copy(alpha = 0.25f)
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = cleanDomain(item.url),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White.copy(alpha = 0.85f)
+                            )
+                        }
+                    },
+                    error = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color(item.colorHex).copy(alpha = 0.7f),
+                                            Color(item.colorHex).copy(alpha = 0.25f)
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = cleanDomain(item.url),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
+                )
 
+                // Folder Badge in Top-Left of Poster
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Black.copy(alpha = 0.55f),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = item.folderName,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+
+                // Top-Right: Selection checkbox or 3-Dot Button
                 if (isSelectionMode) {
                     Checkbox(
                         checked = isSelected,
                         onCheckedChange = { onItemClick() },
-                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
                     )
                 } else {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
                     ) {
-                        Text(
-                            text = item.folderName,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.Black.copy(alpha = 0.45f),
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            IconButton(
+                                onClick = { showItemMenu = true },
+                                modifier = Modifier.testTag("bookmark_card_menu_${item.id}")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "Bookmark Options",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = showItemMenu,
+                            onDismissRequest = { showItemMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Send") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                                },
+                                onClick = {
+                                    showItemMenu = false
+                                    onSendClick()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Add to Home") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Home, contentDescription = null, modifier = Modifier.size(18.dp))
+                                },
+                                onClick = {
+                                    showItemMenu = false
+                                    onAddToSpeedDial()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Edit") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                                },
+                                onClick = {
+                                    showItemMenu = false
+                                    onEditClick()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                },
+                                onClick = {
+                                    showItemMenu = false
+                                    onDeleteClick()
+                                }
+                            )
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Title & URL
-            Text(
-                text = item.title,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = cleanDomain(item.url),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Bottom action icons row with modern background pills
+            // 2. Bottom Content: Website Icon Badge + Title & Domain
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Send Bookmark
-                ActionButtonWithBg(
-                    icon = Icons.Filled.Share,
-                    contentDescription = "Send",
-                    bgColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    onClick = onSendClick,
-                    modifier = Modifier.size(34.dp)
-                )
+                WebsiteFaviconBadge(item = item, size = 40.dp)
 
-                // Add to Speed Dial
-                ActionButtonWithBg(
-                    icon = Icons.Filled.Speed,
-                    contentDescription = "Add to Speed Dial",
-                    bgColor = Color(0xFFFEF3C7),
-                    iconTint = Color(0xFFD97706),
-                    onClick = onAddToSpeedDial,
-                    modifier = Modifier.size(34.dp)
-                )
+                Spacer(modifier = Modifier.width(10.dp))
 
-                // Move Folder
-                ActionButtonWithBg(
-                    icon = Icons.AutoMirrored.Filled.DriveFileMove,
-                    contentDescription = "Move",
-                    bgColor = MaterialTheme.colorScheme.surfaceVariant,
-                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    onClick = onMoveClick,
-                    modifier = Modifier.size(34.dp)
-                )
-
-                // Delete
-                ActionButtonWithBg(
-                    icon = Icons.Filled.DeleteOutline,
-                    contentDescription = "Delete",
-                    bgColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                    iconTint = MaterialTheme.colorScheme.error,
-                    onClick = onDeleteClick,
-                    modifier = Modifier.size(34.dp)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = cleanDomain(item.url),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

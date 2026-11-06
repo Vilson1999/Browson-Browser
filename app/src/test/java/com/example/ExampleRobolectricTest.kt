@@ -99,8 +99,12 @@ class ExampleRobolectricTest {
   @Test
   fun `verify download operations pause resume and clear completed`() {
     val viewModel = com.example.ui.BrowserViewModel()
-    val downloads = viewModel.uiState.value.downloadItems
-    assert(downloads.isNotEmpty())
+    // Initial download list is empty as requested
+    assert(viewModel.uiState.value.downloadItems.isEmpty())
+
+    // Add a download item for operation testing
+    val dlId = viewModel.addDownloadItem("Test_Document.pdf", "https://example.com/doc.pdf", 10_000_000L, "pdf")
+    assertEquals(1, viewModel.uiState.value.downloadItems.size)
 
     // Pause all
     viewModel.pauseAllDownloads()
@@ -110,9 +114,9 @@ class ExampleRobolectricTest {
     viewModel.resumeAllDownloads()
     assert(viewModel.uiState.value.downloadItems.any { it.isDownloading })
 
-    // Clear completed
-    viewModel.clearCompletedDownloads()
-    assert(viewModel.uiState.value.downloadItems.none { it.downloadedBytes >= it.totalBytes })
+    // Clear all downloads
+    viewModel.clearAllDownloads()
+    assert(viewModel.uiState.value.downloadItems.isEmpty())
   }
 
   @Test

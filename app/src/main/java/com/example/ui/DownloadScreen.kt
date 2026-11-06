@@ -30,7 +30,11 @@ import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
@@ -82,10 +86,12 @@ fun DownloadScreen(
     onPauseAll: () -> Unit,
     onResumeAll: () -> Unit,
     onClearCompleted: () -> Unit,
+    onClearAllDownloads: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var showOverflowMenu by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<DownloadCategory?>(null) }
 
@@ -186,66 +192,97 @@ fun DownloadScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    // 3 dots on top which have some menu
-                    Box {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
-                            onClick = { showOverflowMenu = true },
+                            onClick = {
+                                onClearAllDownloads()
+                                Toast.makeText(context, "Downloads cleared", Toast.LENGTH_SHORT).show()
+                            },
                             modifier = Modifier
                                 .size(48.dp)
-                                .testTag("download_overflow_menu_btn")
+                                .testTag("download_clear_all_top_button")
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.MoreVert,
-                                contentDescription = "More download options",
+                                imageVector = Icons.Filled.DeleteSweep,
+                                contentDescription = "Clear all downloads",
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
 
-                        DropdownMenu(
-                            expanded = showOverflowMenu,
-                            onDismissRequest = { showOverflowMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Pause all") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Pause, contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                                onClick = {
-                                    onPauseAll()
-                                    showOverflowMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Resume all") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                                onClick = {
-                                    onResumeAll()
-                                    showOverflowMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Clear completed") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                                onClick = {
-                                    onClearCompleted()
-                                    showOverflowMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Download settings") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    onOpenSettings()
-                                }
-                            )
+                        // 3 dots on top which have some menu
+                        Box {
+                            IconButton(
+                                onClick = { showOverflowMenu = true },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .testTag("download_overflow_menu_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "More download options",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = showOverflowMenu,
+                                onDismissRequest = { showOverflowMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Pause all") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.Pause, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                    onClick = {
+                                        onPauseAll()
+                                        showOverflowMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Resume all") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                    onClick = {
+                                        onResumeAll()
+                                        showOverflowMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Clear completed") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                    onClick = {
+                                        onClearCompleted()
+                                        showOverflowMenu = false
+                                        Toast.makeText(context, "Completed downloads cleared", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Clear all downloads", color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                    },
+                                    onClick = {
+                                        onClearAllDownloads()
+                                        showOverflowMenu = false
+                                        Toast.makeText(context, "All downloads cleared", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Download settings") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        onOpenSettings()
+                                    }
+                                )
+                            }
                         }
                     }
                 }

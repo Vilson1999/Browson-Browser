@@ -326,36 +326,6 @@ fun SettingsScreen(
                                         color = primaryTextColor
                                     )
                                 }
-
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    IconButton(
-                                        onClick = {
-                                            val next = when (themeMode) {
-                                                ThemeMode.LIGHT -> ThemeMode.DARK
-                                                ThemeMode.DARK -> ThemeMode.AMOLED
-                                                ThemeMode.AMOLED -> ThemeMode.LIGHT
-                                                ThemeMode.SYSTEM -> if (isDark) ThemeMode.LIGHT else ThemeMode.DARK
-                                            }
-                                            onThemeModeChange(next)
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = when (themeMode) {
-                                                ThemeMode.LIGHT -> Icons.Filled.LightMode
-                                                ThemeMode.DARK -> Icons.Filled.DarkMode
-                                                ThemeMode.AMOLED -> Icons.Filled.Brightness4
-                                                ThemeMode.SYSTEM -> Icons.Filled.BrightnessAuto
-                                            },
-                                            contentDescription = "Switch Theme",
-                                            tint = accentTint,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
                             }
                         }
                     }
@@ -369,38 +339,6 @@ fun SettingsScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Header tip
-                    item {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 6.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            color = badgeBgColor
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Shield,
-                                    contentDescription = null,
-                                    tint = accentTint,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = "Select any category below to configure its options on a dedicated page.",
-                                    fontSize = 12.sp,
-                                    color = accentTint,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
                     // Display Theme Quick Switcher Card
                     item {
                         Card(
@@ -437,18 +375,11 @@ fun SettingsScreen(
                                             )
                                         }
                                     }
-                                    Column {
-                                        Text(
-                                            text = "Display Theme",
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = primaryTextColor
-                                        )
-                                        Text(
-                                            text = "Choose Light, Dark, or true AMOLED black mode",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = secondaryTextColor
-                                        )
-                                    }
+                                    Text(
+                                        text = "Display Theme",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = primaryTextColor
+                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -854,38 +785,6 @@ fun SettingsScreen(
                                         primaryTextColor = primaryTextColor,
                                         secondaryTextColor = secondaryTextColor
                                     )
-
-                                    HorizontalDivider(color = cardBorderColor)
-
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Bookmark Columns",
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = primaryTextColor
-                                            )
-                                            Text(
-                                                text = "Current layout: $bookmarkColumns columns per row",
-                                                fontSize = 11.sp,
-                                                color = secondaryTextColor
-                                            )
-                                        }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            listOf(4, 5).forEach { cols ->
-                                                FilterChip(
-                                                    selected = bookmarkColumns == cols,
-                                                    onClick = { bookmarkColumns = cols },
-                                                    label = { Text("$cols", fontSize = 11.sp) }
-                                                )
-                                            }
-                                        }
-                                    }
                                 }
                             }
 
@@ -1098,7 +997,7 @@ fun SettingsScreen(
                                 }
                             }
 
-                            // Section 3: Wallpaper Menu (Light, Dark, System Default)
+                            // Section 3: Wallpaper Menu
                             item {
                                 SettingsOptionGroupCard(
                                     title = stringResource(R.string.settings_home_wallpaper),
@@ -1106,47 +1005,6 @@ fun SettingsScreen(
                                     primaryTextColor = primaryTextColor,
                                     cardBorderColor = cardBorderColor
                                 ) {
-                                    Text(
-                                        text = "Select wallpaper for Home Screen background:",
-                                        fontSize = 12.sp,
-                                        color = secondaryTextColor
-                                    )
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    // 3 Options: System Default (Auto), Light, Dark
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        listOf(
-                                            Triple("SYSTEM", "System Default", Icons.Filled.BrightnessAuto),
-                                            Triple("LIGHT", "Light", Icons.Filled.LightMode),
-                                            Triple("DARK", "Dark", Icons.Filled.DarkMode)
-                                        ).forEach { (mode, label, icon) ->
-                                            FilterChip(
-                                                selected = wallpaperMode.uppercase() == mode,
-                                                onClick = { onSelectWallpaper(mode, wallpaperStyle) },
-                                                label = { Text(label, fontSize = 11.sp) },
-                                                leadingIcon = {
-                                                    Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp))
-                                                },
-                                                colors = FilterChipDefaults.filterChipColors(
-                                                    selectedContainerColor = accentTint.copy(alpha = 0.2f),
-                                                    selectedLabelColor = accentTint
-                                                )
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Text(
-                                        text = "Wallpaper Style:",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = primaryTextColor
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2858,7 +2716,7 @@ fun SettingsScreen(
 @Composable
 fun SettingsMenuItemCard(
     title: String,
-    subtitle: String,
+    subtitle: String = "",
     icon: ImageVector,
     onClick: () -> Unit,
     testTag: String,
@@ -2908,13 +2766,6 @@ fun SettingsMenuItemCard(
                     fontWeight = FontWeight.SemiBold,
                     color = primaryTextColor
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = subtitle,
-                    fontSize = 12.sp,
-                    color = secondaryTextColor,
-                    maxLines = 1
-                )
             }
 
             Icon(
@@ -2961,7 +2812,7 @@ fun SettingsOptionGroupCard(
 @Composable
 fun SettingToggleRow(
     title: String,
-    description: String,
+    description: String = "",
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     accentTint: Color,
@@ -2972,21 +2823,15 @@ fun SettingToggleRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCheckedChange(!checked) }
-            .padding(vertical = 6.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = primaryTextColor
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = description,
-                fontSize = 11.sp,
-                color = secondaryTextColor
             )
         }
         Spacer(modifier = Modifier.width(8.dp))

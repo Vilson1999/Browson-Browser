@@ -26,6 +26,7 @@ data class BookmarkItem(
     val initial: String = "",
     val colorHex: Long = 0xFF10B981,
     val customIconUrl: String? = null,
+    val posterUrl: String? = null,
     val showOnHomeScreen: Boolean = true,
     val folderId: String = "folder-mobile",
     val folderName: String = "Mobile Bookmarks",
@@ -33,6 +34,9 @@ data class BookmarkItem(
 ) {
     val faviconUrl: String
         get() = customIconUrl ?: "https://www.google.com/s2/favicons?sz=128&domain_url=${url.trim()}"
+
+    val displayPosterUrl: String
+        get() = posterUrl ?: "https://image.thum.io/get/width/400/crop/600/noanimate/${url.trim()}"
 }
 
 data class BrowserTab(

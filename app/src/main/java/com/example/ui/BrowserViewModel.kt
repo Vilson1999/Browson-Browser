@@ -135,98 +135,7 @@ class BrowserViewModel : ViewModel() {
                     timestamp = System.currentTimeMillis() - 36 * 3600 * 1000
                 )
             ),
-            downloadItems = listOf(
-                DownloadItem(
-                    id = "dl-1",
-                    fileName = "Android_Studio_Ladybug.tar.gz",
-                    url = "https://developer.android.com/studio/ladybug.tar.gz",
-                    totalBytes = 980_000_000L,
-                    downloadedBytes = 460_000_000L,
-                    speedBytesPerSec = 4_800_000L,
-                    isDownloading = true,
-                    extension = "tar"
-                ),
-                DownloadItem(
-                    id = "dl-2",
-                    fileName = "Nature_4K_Wildlife_Drone.mp4",
-                    url = "https://video.example.com/nature_4k.mp4",
-                    totalBytes = 145_000_000L,
-                    downloadedBytes = 62_000_000L,
-                    speedBytesPerSec = 2_100_000L,
-                    isDownloading = true,
-                    extension = "video"
-                ),
-                DownloadItem(
-                    id = "dl-3",
-                    fileName = "Kotlin_Multiplatform_Guide.pdf",
-                    url = "https://kotlinlang.org/docs/kmp.pdf",
-                    totalBytes = 18_400_000L,
-                    downloadedBytes = 18_400_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "pdf"
-                ),
-                DownloadItem(
-                    id = "dl-4",
-                    fileName = "Browson_Browser_Release.apk",
-                    url = "https://download.browson.com/app-v2.apk",
-                    totalBytes = 42_500_000L,
-                    downloadedBytes = 42_500_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "apk"
-                ),
-                DownloadItem(
-                    id = "dl-5",
-                    fileName = "Lofi_Chill_Beats_2026.mp3",
-                    url = "https://audio.example.com/lofi.mp3",
-                    totalBytes = 9_200_000L,
-                    downloadedBytes = 9_200_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "audio"
-                ),
-                DownloadItem(
-                    id = "dl-6",
-                    fileName = "Site_Manifest_Config.xml",
-                    url = "https://example.com/manifest.xml",
-                    totalBytes = 320_000L,
-                    downloadedBytes = 320_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "xml"
-                ),
-                DownloadItem(
-                    id = "dl-7",
-                    fileName = "Developer_Notes.txt",
-                    url = "https://notes.example.com/notes.txt",
-                    totalBytes = 54_000L,
-                    downloadedBytes = 54_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "txt"
-                ),
-                DownloadItem(
-                    id = "dl-8",
-                    fileName = "Material_Design_Icons.zip",
-                    url = "https://design.google/icons.zip",
-                    totalBytes = 28_000_000L,
-                    downloadedBytes = 28_000_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "zip"
-                ),
-                DownloadItem(
-                    id = "dl-9",
-                    fileName = "Dataset_Archive_Compressed.rar",
-                    url = "https://data.example.com/dataset.rar",
-                    totalBytes = 64_000_000L,
-                    downloadedBytes = 64_000_000L,
-                    speedBytesPerSec = 0L,
-                    isDownloading = false,
-                    extension = "rar"
-                )
-            )
+            downloadItems = emptyList()
         )
     )
     val uiState: StateFlow<BrowserUiState> = _uiState.asStateFlow()
@@ -789,6 +698,30 @@ class BrowserViewModel : ViewModel() {
                 downloadItems = state.downloadItems.filter { it.downloadedBytes < it.totalBytes }
             )
         }
+    }
+
+    fun clearAllDownloads() {
+        _uiState.update { state ->
+            state.copy(downloadItems = emptyList())
+        }
+    }
+
+    fun addDownloadItem(fileName: String, url: String, totalBytes: Long, extension: String): String {
+        val id = UUID.randomUUID().toString()
+        val item = DownloadItem(
+            id = id,
+            fileName = fileName,
+            url = url,
+            totalBytes = totalBytes,
+            downloadedBytes = 0L,
+            speedBytesPerSec = 1_500_000L,
+            isDownloading = true,
+            extension = extension
+        )
+        _uiState.update { state ->
+            state.copy(downloadItems = listOf(item) + state.downloadItems)
+        }
+        return id
     }
 
     // Tool Menu Customization

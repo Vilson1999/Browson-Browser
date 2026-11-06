@@ -133,6 +133,7 @@ class MainActivity : ComponentActivity() {
                         onPauseAll = { viewModel.pauseAllDownloads() },
                         onResumeAll = { viewModel.resumeAllDownloads() },
                         onClearCompleted = { viewModel.clearCompletedDownloads() },
+                        onClearAllDownloads = { viewModel.clearAllDownloads() },
                         onOpenSettings = {
                             viewModel.closeDownloadScreen()
                             viewModel.openSettingsScreen()

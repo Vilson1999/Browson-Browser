@@ -29,8 +29,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,16 +68,19 @@ fun BottomToolbar(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = if (appTheme.isAmoled) 0.dp else 8.dp,
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                elevation = if (appTheme.isAmoled) 0.dp else 4.dp,
+                shape = RectangleShape
             )
-            .border(
-                width = 1.dp,
-                color = appTheme.toolbarBorder,
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-            ),
+            .drawBehind {
+                drawLine(
+                    color = appTheme.toolbarBorder,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx()
+                )
+            },
         color = appTheme.toolbarBg,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        shape = RectangleShape
     ) {
         Row(
             modifier = Modifier
@@ -87,275 +93,228 @@ fun BottomToolbar(
         ) {
             val iconColor = appTheme.onSurface
             val iconDisabledColor = appTheme.onSurfaceVariant.copy(alpha = 0.35f)
-            val btnContainerBg = when {
-                appTheme.isAmoled -> Color(0xFF0F0F12)
-                appTheme.isDark -> Color(0xFF1E2837)
-                else -> Color(0xFFF1F5F9)
-            }
 
             toolbarToolIds.forEach { toolId ->
                 when (toolId) {
                     "nav_back" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (canGoBack) btnContainerBg else Color.Transparent,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onBackClick,
+                            enabled = canGoBack,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_back")
                         ) {
-                            IconButton(
-                                onClick = onBackClick,
-                                enabled = canGoBack,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_back")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.nav_back),
-                                    tint = if (canGoBack) iconColor else iconDisabledColor,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.nav_back),
+                                tint = if (canGoBack) iconColor else iconDisabledColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "nav_forward" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (canGoForward) btnContainerBg else Color.Transparent,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onForwardClick,
+                            enabled = canGoForward,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_forward")
                         ) {
-                            IconButton(
-                                onClick = onForwardClick,
-                                enabled = canGoForward,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_forward")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = stringResource(R.string.nav_forward),
-                                    tint = if (canGoForward) iconColor else iconDisabledColor,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = stringResource(R.string.nav_forward),
+                                tint = if (canGoForward) iconColor else iconDisabledColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "nav_home" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onHomeClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_home")
                         ) {
-                            IconButton(
-                                onClick = onHomeClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_home")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Home,
-                                    contentDescription = stringResource(R.string.nav_home),
-                                    tint = appTheme.primary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Filled.Home,
+                                contentDescription = stringResource(R.string.nav_home),
+                                tint = iconColor,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
                     }
 
                     "nav_tabs" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onTabsClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_tabs")
                         ) {
-                            IconButton(
-                                onClick = onTabsClick,
+                            Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_tabs")
+                                    .size(24.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .border(
+                                        width = 2.dp,
+                                        color = iconColor,
+                                        shape = RoundedCornerShape(6.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .border(
-                                            width = 1.8.dp,
-                                            color = iconColor,
-                                            shape = RoundedCornerShape(6.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = tabsCount.toString(),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = iconColor
-                                    )
-                                }
+                                Text(
+                                    text = tabsCount.toString(),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = iconColor
+                                )
                             }
                         }
                     }
 
                     "nav_menu" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onMenuClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_me")
                         ) {
-                            IconButton(
-                                onClick = onMenuClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_me")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = stringResource(R.string.nav_me),
-                                    tint = iconColor,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = stringResource(R.string.nav_me),
+                                tint = iconColor,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
                     }
 
                     "history" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onHistoryClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_history")
                         ) {
-                            IconButton(
-                                onClick = onHistoryClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_history")
-                            ) {
-                                val tool = com.example.model.BrowserToolCatalog.getTool("history")
-                                Icon(imageVector = tool.icon, contentDescription = tool.label, tint = iconColor, modifier = Modifier.size(22.dp))
-                            }
+                            val tool = com.example.model.BrowserToolCatalog.getTool("history")
+                            Icon(
+                                imageVector = tool.icon,
+                                contentDescription = tool.label,
+                                tint = iconColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "downloads" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onDownloadsClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_downloads")
                         ) {
-                            IconButton(
-                                onClick = onDownloadsClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_downloads")
-                            ) {
-                                val tool = com.example.model.BrowserToolCatalog.getTool("downloads")
-                                Icon(imageVector = tool.icon, contentDescription = tool.label, tint = iconColor, modifier = Modifier.size(22.dp))
-                            }
+                            val tool = com.example.model.BrowserToolCatalog.getTool("downloads")
+                            Icon(
+                                imageVector = tool.icon,
+                                contentDescription = tool.label,
+                                tint = iconColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "bookmarks" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onBookmarksClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_bookmarks")
                         ) {
-                            IconButton(
-                                onClick = onBookmarksClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_bookmarks")
-                            ) {
-                                val tool = com.example.model.BrowserToolCatalog.getTool("bookmarks")
-                                Icon(imageVector = tool.icon, contentDescription = tool.label, tint = iconColor, modifier = Modifier.size(22.dp))
-                            }
+                            val tool = com.example.model.BrowserToolCatalog.getTool("bookmarks")
+                            Icon(
+                                imageVector = tool.icon,
+                                contentDescription = tool.label,
+                                tint = iconColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "new_tab" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onNewTabClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_new_tab")
                         ) {
-                            IconButton(
-                                onClick = onNewTabClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_new_tab")
-                            ) {
-                                val tool = com.example.model.BrowserToolCatalog.getTool("new_tab")
-                                Icon(imageVector = tool.icon, contentDescription = tool.label, tint = iconColor, modifier = Modifier.size(22.dp))
-                            }
+                            val tool = com.example.model.BrowserToolCatalog.getTool("new_tab")
+                            Icon(
+                                imageVector = tool.icon,
+                                contentDescription = tool.label,
+                                tint = iconColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "share" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onShareClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_share")
                         ) {
-                            IconButton(
-                                onClick = onShareClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_share")
-                            ) {
-                                val tool = com.example.model.BrowserToolCatalog.getTool("share")
-                                Icon(imageVector = tool.icon, contentDescription = tool.label, tint = iconColor, modifier = Modifier.size(22.dp))
-                            }
+                            val tool = com.example.model.BrowserToolCatalog.getTool("share")
+                            Icon(
+                                imageVector = tool.icon,
+                                contentDescription = tool.label,
+                                tint = iconColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     "dark_mode" -> {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = onDarkModeClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_dark_mode")
                         ) {
-                            IconButton(
-                                onClick = onDarkModeClick,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_dark_mode")
-                            ) {
-                                val modeIcon = when {
-                                    appTheme.isAmoled -> Icons.Filled.Brightness4
-                                    appTheme.isDark -> Icons.Filled.DarkMode
-                                    else -> Icons.Filled.LightMode
-                                }
-                                val iconTint = when {
-                                    appTheme.isAmoled -> Color(0xFF67E8F9)
-                                    appTheme.isDark -> Color(0xFF90CAF9)
-                                    else -> Color(0xFFF59E0B)
-                                }
-                                Icon(
-                                    imageVector = modeIcon,
-                                    contentDescription = "Theme Switcher",
-                                    tint = iconTint,
-                                    modifier = Modifier.size(22.dp)
-                                )
+                            val modeIcon = when {
+                                appTheme.isAmoled -> Icons.Filled.Brightness4
+                                appTheme.isDark -> Icons.Filled.DarkMode
+                                else -> Icons.Filled.LightMode
                             }
+                            val iconTint = when {
+                                appTheme.isAmoled -> Color(0xFF67E8F9)
+                                appTheme.isDark -> Color(0xFF90CAF9)
+                                else -> Color(0xFFF59E0B)
+                            }
+                            Icon(
+                                imageVector = modeIcon,
+                                contentDescription = "Theme Switcher",
+                                tint = iconTint,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
 
                     else -> {
                         val tool = com.example.model.BrowserToolCatalog.getTool(toolId)
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = btnContainerBg,
-                            modifier = Modifier.size(40.dp)
+                        IconButton(
+                            onClick = { onOtherToolClick(toolId) },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("toolbar_btn_$toolId")
                         ) {
-                            IconButton(
-                                onClick = { onOtherToolClick(toolId) },
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag("toolbar_btn_$toolId")
-                            ) {
-                                Icon(imageVector = tool.icon, contentDescription = tool.label, tint = iconColor, modifier = Modifier.size(22.dp))
-                            }
+                            Icon(
+                                imageVector = tool.icon,
+                                contentDescription = tool.label,
+                                tint = iconColor,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
                 }
