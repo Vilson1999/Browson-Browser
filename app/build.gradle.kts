@@ -15,7 +15,7 @@ android {
   defaultConfig {
     applicationId = "com.aistudio.browson.vskxyz"
     minSdk = 28
-    targetSdk = 32
+    targetSdk = 36
     versionCode = 1
     versionName = "1.0"
 
