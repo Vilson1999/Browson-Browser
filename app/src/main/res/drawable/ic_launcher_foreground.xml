@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/ic_browson_logo_blue_center"
+        android:drawable="@drawable/ic_browson_launcher"
         android:gravity="center" />
 </layer-list>
