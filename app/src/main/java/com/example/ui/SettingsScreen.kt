@@ -570,7 +570,6 @@ fun SettingsScreen(
                     item {
                         SettingsMenuItemCard(
                             title = stringResource(R.string.settings_search_engine),
-                            subtitle = stringResource(R.string.settings_search_engine_desc),
                             icon = Icons.Filled.Search,
                             onClick = { currentSubPage = SettingsMenuPage.SEARCH_ENGINE },
                             testTag = "settings_menu_search_engine",
@@ -781,38 +780,6 @@ fun SettingsScreen(
                                         description = "Display bookmark shortcuts row with add icon",
                                         checked = showBookmarksOnHome,
                                         onCheckedChange = { showBookmarksOnHome = it },
-                                        accentTint = accentTint,
-                                        primaryTextColor = primaryTextColor,
-                                        secondaryTextColor = secondaryTextColor
-                                    )
-                                }
-                            }
-
-                            // Option 3: Additional Home Preferences
-                            item {
-                                SettingsOptionGroupCard(
-                                    title = "Home Behavior",
-                                    cardBgColor = cardBgColor,
-                                    primaryTextColor = primaryTextColor,
-                                    cardBorderColor = cardBorderColor
-                                ) {
-                                    SettingToggleRow(
-                                        title = "Open New Tabs to Home",
-                                        description = "New tabs start on Home screen with quick shortcuts",
-                                        checked = openNewTabOnHome,
-                                        onCheckedChange = { openNewTabOnHome = it },
-                                        accentTint = accentTint,
-                                        primaryTextColor = primaryTextColor,
-                                        secondaryTextColor = secondaryTextColor
-                                    )
-
-                                    HorizontalDivider(color = cardBorderColor)
-
-                                    SettingToggleRow(
-                                        title = "Show Developer Info",
-                                        description = "Display Vilson Sonkar author badge on Home",
-                                        checked = showWeatherWidget,
-                                        onCheckedChange = { showWeatherWidget = it },
                                         accentTint = accentTint,
                                         primaryTextColor = primaryTextColor,
                                         secondaryTextColor = secondaryTextColor
@@ -1326,48 +1293,6 @@ fun SettingsScreen(
                                         primaryTextColor = primaryTextColor,
                                         secondaryTextColor = secondaryTextColor
                                     )
-
-                                    HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(vertical = 10.dp))
-
-                                    Text(
-                                        text = "Animation Speed Scale:",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = primaryTextColor
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = "Controls transition duration across screens and menus",
-                                        fontSize = 11.sp,
-                                        color = secondaryTextColor
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        listOf(
-                                            Pair("0.75x (Default)", 0.75f),
-                                            Pair("0.5x (-50%)", 0.5f),
-                                            Pair("0.25x", 0.25f),
-                                            Pair("Off (0x)", 0.0f)
-                                        ).forEach { (label, scale) ->
-                                            val isSelected = kotlin.math.abs(animationScale - scale) < 0.05f
-                                            FilterChip(
-                                                selected = isSelected,
-                                                onClick = {
-                                                    onAnimationScaleChange(scale)
-                                                    onToggleReduceAnimations(scale < 0.75f)
-                                                },
-                                                label = { Text(label, fontSize = 11.sp) },
-                                                colors = FilterChipDefaults.filterChipColors(
-                                                    selectedContainerColor = accentTint.copy(alpha = 0.2f),
-                                                    selectedLabelColor = accentTint
-                                                )
-                                            )
-                                        }
-                                    }
 
                                     HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(vertical = 10.dp))
 

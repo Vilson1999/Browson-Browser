@@ -79,6 +79,7 @@ fun MenuBottomSheet(
     onOpenHistory: () -> Unit = {},
     onOpenDownloads: () -> Unit = {},
     onOpenBookmarks: () -> Unit = {},
+    onOpenP2PShare: () -> Unit = {},
     activeToolIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_IDS,
     currentUrl: String,
     onDismiss: () -> Unit
@@ -220,6 +221,10 @@ fun MenuBottomSheet(
                                         "bookmarks" -> {
                                             onDismiss()
                                             onOpenBookmarks()
+                                        }
+                                        "p2p_share" -> {
+                                            onDismiss()
+                                            onOpenP2PShare()
                                         }
                                         "desktop" -> {
                                             isDesktopSite = !isDesktopSite

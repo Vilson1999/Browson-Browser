@@ -56,6 +56,8 @@ data class BrowserUiState(
     val showHistoryScreen: Boolean = false,
     val showDownloadScreen: Boolean = false,
     val showBookmarkScreen: Boolean = false,
+    val showP2PShareScreen: Boolean = false,
+    val p2pInitialPayload: com.example.p2p.P2pSendPayload? = null,
     val historyItems: List<HistoryItem> = emptyList(),
     val downloadItems: List<DownloadItem> = emptyList(),
     val activeToolMenuIds: List<String> = com.example.model.BrowserToolCatalog.DEFAULT_ACTIVE_IDS,
@@ -283,6 +285,27 @@ class BrowserViewModel : ViewModel() {
 
     fun closeBookmarkScreen() {
         _uiState.update { it.copy(showBookmarkScreen = false) }
+    }
+
+    // Offline Wi-Fi Direct P2P Share Screen
+    fun openP2PShareScreen(payload: com.example.p2p.P2pSendPayload? = null) {
+        _uiState.update {
+            it.copy(
+                showP2PShareScreen = true,
+                p2pInitialPayload = payload,
+                showMenuSheet = false,
+                showTabsSheet = false
+            )
+        }
+    }
+
+    fun closeP2PShareScreen() {
+        _uiState.update {
+            it.copy(
+                showP2PShareScreen = false,
+                p2pInitialPayload = null
+            )
+        }
     }
 
     fun selectBookmarkFolder(folderId: String) {
