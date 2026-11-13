@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.WifiTethering
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -40,12 +39,11 @@ data class BrowserTool(
 
 object BrowserToolCatalog {
     val ALL_TOOLS: List<BrowserTool> = listOf(
-        // Default tools
+        // Default 9 tools for 3x3
         BrowserTool("history", Icons.Filled.History, "History", "Browse visited web pages"),
         BrowserTool("offline", Icons.Filled.Flight, "Offline pages", "Saved pages for reading offline"),
         BrowserTool("downloads", Icons.Filled.Download, "Downloads", "Manage downloaded files"),
         BrowserTool("bookmarks", Icons.Filled.BookmarkBorder, "Bookmarks", "Quick access to saved bookmarks"),
-        BrowserTool("p2p_share", Icons.Filled.WifiTethering, "P2P Share", "Offline Wi-Fi Direct file & page transfer"),
         BrowserTool("desktop", Icons.Filled.DesktopWindows, "Desktop site", "Request desktop version of site"),
         BrowserTool("find", Icons.Filled.Search, "Find in page", "Search text on current page"),
         BrowserTool("share", Icons.Filled.Share, "Share", "Share page link or content"),

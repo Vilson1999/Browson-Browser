@@ -24,7 +24,6 @@ import com.example.ui.BrowserViewModel
 import com.example.ui.DownloadScreen
 import com.example.ui.HistoryScreen
 import com.example.ui.HomeScreen
-import com.example.ui.P2PShareScreen
 import com.example.ui.SettingsScreen
 import com.example.ui.ThemeMode
 import com.example.ui.components.AddBookmarkDialog
@@ -135,16 +134,6 @@ class MainActivity : ComponentActivity() {
                         onResumeAll = { viewModel.resumeAllDownloads() },
                         onClearCompleted = { viewModel.clearCompletedDownloads() },
                         onClearAllDownloads = { viewModel.clearAllDownloads() },
-                        onShareP2P = { item ->
-                            viewModel.closeDownloadScreen()
-                            viewModel.openP2PShareScreen(
-                                com.example.p2p.P2pSendPayload(
-                                    title = item.fileName,
-                                    sizeBytes = item.totalBytes,
-                                    type = "FILE"
-                                )
-                            )
-                        },
                         onOpenSettings = {
                             viewModel.closeDownloadScreen()
                             viewModel.openSettingsScreen()
@@ -169,18 +158,6 @@ class MainActivity : ComponentActivity() {
                         onExportJson = { viewModel.exportBookmarksAsJson() },
                         onExportHtml = { viewModel.exportBookmarksAsHtml() },
                         onClose = { viewModel.closeBookmarkScreen() }
-                    )
-                } else if (uiState.showP2PShareScreen) {
-                    P2PShareScreen(
-                        currentWebUrl = uiState.currentUrl,
-                        currentWebTitle = uiState.webPageTitle,
-                        downloadItems = uiState.downloadItems,
-                        initialPayload = uiState.p2pInitialPayload,
-                        onOpenUrlInBrowser = { url, title ->
-                            viewModel.closeP2PShareScreen()
-                            viewModel.navigateToUrl(url, title)
-                        },
-                        onClose = { viewModel.closeP2PShareScreen() }
                     )
                 } else {
                     val appTheme = LocalAppTheme.current
@@ -367,9 +344,6 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenBookmarks = {
                                     viewModel.openBookmarkScreen()
-                                },
-                                onOpenP2PShare = {
-                                    viewModel.openP2PShareScreen()
                                 },
                                 activeToolIds = uiState.activeToolMenuIds,
                                 currentUrl = uiState.currentUrl,

@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.WifiTethering
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Delete
@@ -88,7 +87,6 @@ fun DownloadScreen(
     onResumeAll: () -> Unit,
     onClearCompleted: () -> Unit,
     onClearAllDownloads: () -> Unit = {},
-    onShareP2P: ((DownloadItem) -> Unit)? = null,
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
@@ -518,8 +516,7 @@ fun DownloadScreen(
                         DownloadItemCard(
                             item = item,
                             onTogglePause = { onPauseOrResume(item.id) },
-                            onDelete = { onDeleteDownload(item.id) },
-                            onShareP2P = if (onShareP2P != null) { { onShareP2P(item) } } else null
+                            onDelete = { onDeleteDownload(item.id) }
                         )
                     }
                 }
@@ -580,7 +577,6 @@ private fun DownloadItemCard(
     item: DownloadItem,
     onTogglePause: () -> Unit,
     onDelete: () -> Unit,
-    onShareP2P: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isComplete = item.downloadedBytes >= item.totalBytes
@@ -716,22 +712,6 @@ private fun DownloadItemCard(
                             .size(24.dp)
                             .padding(end = 4.dp)
                     )
-                }
-
-                if (onShareP2P != null) {
-                    IconButton(
-                        onClick = onShareP2P,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .testTag("download_p2p_share_${item.id}")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.WifiTethering,
-                            contentDescription = "Share offline via P2P",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
                 }
 
                 IconButton(
